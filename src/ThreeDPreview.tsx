@@ -76,7 +76,7 @@ function normalizeGeometry(geometry: THREE.BufferGeometry) {
     const y = positions.getY(index)
     const z = positions.getZ(index)
     uv[index * 2] = (x - uvMin.x) / uSize
-    uv[index * 2 + 1] = (z !== 0 ? z - uvMin.z : y - uvMin.y) / vSize
+    uv[index * 2 + 1] = 1 - (z !== 0 ? z - uvMin.z : y - uvMin.y) / vSize
   }
   geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
   geometry.computeVertexNormals()
@@ -104,7 +104,7 @@ export default function ThreeDPreview({ base, dots, accessory, shape, length }: 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#292929')
     const camera = new THREE.PerspectiveCamera(31, 1, .1, 100)
-    camera.position.set(0, 0.55, 9.3)
+    camera.position.set(0, 0.55, 15.3) // 调远摄像头
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -142,7 +142,7 @@ export default function ThreeDPreview({ base, dots, accessory, shape, length }: 
     const loader = new STLLoader()
     const urls = modelUrls(shape, length)
     const xPositions = [-2.6, -1.3, 0, 1.3, 2.6]
-    const yPositions = [-.22, .08, .2, .08, -.22]
+    const rowY = [2.18, -0.18] // 调高Y位置
 
     Promise.all(urls.map((url) => loader.loadAsync(url))).then((geometries) => {
       if (disposed) return
@@ -153,8 +153,8 @@ export default function ThreeDPreview({ base, dots, accessory, shape, length }: 
           const mesh = new THREE.Mesh(normalized.clone(), material)
           mesh.castShadow = true
           mesh.receiveShadow = true
-          mesh.position.set(xPositions[fingerIndex], hand === 0 ? yPositions[fingerIndex] + .95 : yPositions[fingerIndex] - .98, .15)
-          mesh.rotation.set(hand === 0 ? -.25 : Math.PI + .25, 0, fingerIndex === 4 ? -.20 : fingerIndex === 0 ? .20 : 0)
+          mesh.position.set(xPositions[fingerIndex], rowY[hand], .15)
+          mesh.rotation.set(-0.5 * Math.PI, Math.PI, 0) // 旋转到指尖朝下
           mesh.scale.setScalar(fingerIndex === 4 || fingerIndex === 0 ? .86 : 1)
           group.add(mesh)
         }
@@ -200,5 +200,5 @@ export default function ThreeDPreview({ base, dots, accessory, shape, length }: 
     }
   }, [base, dots, shape, length])
 
-  return <div className="three-d-preview real-three" ref={mountRef}><span className="three-d-axis">REAL STL PREVIEW <b>10 FINGERS</b></span><div className="three-status"><span className="status-pulse"/>{status}</div><div className="three-accessory"><img src={accessory.src} alt="selected accessory"/><span>{accessory.name}</span></div><button className="orbit-hint">⌘ 拖动旋转</button></div>
+  return <div className="three-d-preview real-three" ref={mountRef}><span className="three-d-axis">REAL STL PREVIEW <b>10 FINGERS</b></span><span className="three-row-tag row-top">LEFT HAND · 5</span><span className="three-row-tag row-bottom">RIGHT HAND · 5</span><div className="three-status"><span className="status-pulse"/>{status}</div><div className="three-accessory"><img src={accessory.src} alt="selected accessory"/><span>{accessory.name}</span></div><button className="orbit-hint">⌘ 拖动旋转</button></div>
 }
