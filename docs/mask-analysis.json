@@ -1,0 +1,1069 @@
+{
+  "method": "Full triangle union, X mirrored, Z root-to-tip. Independent width/height normalization; 512x512 binary comparison. Medoid maximizes mean IoU. Row edge errors are horizontal differences, not Hausdorff distance. Shared masks: 4096px triangle union downsampled to 2048px.",
+  "sourceBytes": 1095692600,
+  "maskBytes": 337211,
+  "families": {
+    "杏仁形": {
+      "count": 25,
+      "template": "杏仁形/中长/3",
+      "meanIoU": 0.999129,
+      "minIoU": 0.997524,
+      "worst": "杏仁形/超长/1",
+      "worstRowEdgeP95PercentWidth": 0.391,
+      "worstRowEdgeMaxPercentWidth": 0.977,
+      "lengths": {
+        "短": {
+          "count": 5,
+          "template": "杏仁形/短/1",
+          "meanIoU": 0.99956,
+          "minIoU": 0.999363,
+          "worst": "杏仁形/短/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "中": {
+          "count": 5,
+          "template": "杏仁形/中/3",
+          "meanIoU": 0.999604,
+          "minIoU": 0.999417,
+          "worst": "杏仁形/中/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.781
+        },
+        "中长": {
+          "count": 5,
+          "template": "杏仁形/中长/1",
+          "meanIoU": 0.999658,
+          "minIoU": 0.999559,
+          "worst": "杏仁形/中长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "长": {
+          "count": 5,
+          "template": "杏仁形/长/3",
+          "meanIoU": 0.999687,
+          "minIoU": 0.999584,
+          "worst": "杏仁形/长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "超长": {
+          "count": 5,
+          "template": "杏仁形/超长/0",
+          "meanIoU": 0.999801,
+          "minIoU": 0.999716,
+          "worst": "杏仁形/超长/2",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        }
+      },
+      "widthRange": [
+        8.4951171875,
+        13.4921875
+      ],
+      "heightRange": [
+        13.990234375,
+        44.97027587890625
+      ],
+      "dimensions": {
+        "短": [
+          [
+            8.495117,
+            13.990234
+          ],
+          [
+            9.994385,
+            15.489197
+          ],
+          [
+            11.495605,
+            16.488525
+          ],
+          [
+            10.494141,
+            15.988953
+          ],
+          [
+            13.492188,
+            17.987427
+          ]
+        ],
+        "中": [
+          [
+            8.495117,
+            19.48645
+          ],
+          [
+            9.994385,
+            20.985352
+          ],
+          [
+            11.493896,
+            22.484375
+          ],
+          [
+            10.494141,
+            21.984619
+          ],
+          [
+            13.492188,
+            23.983276
+          ]
+        ],
+        "中长": [
+          [
+            8.495117,
+            23.483582
+          ],
+          [
+            9.994385,
+            24.483093
+          ],
+          [
+            11.493896,
+            25.482239
+          ],
+          [
+            10.494141,
+            24.982666
+          ],
+          [
+            13.492188,
+            27.98053
+          ]
+        ],
+        "长": [
+          [
+            8.495117,
+            26.98114
+          ],
+          [
+            9.994385,
+            28.480164
+          ],
+          [
+            11.493896,
+            29.479492
+          ],
+          [
+            10.494141,
+            28.979858
+          ],
+          [
+            13.492188,
+            31.977722
+          ]
+        ],
+        "超长": [
+          [
+            8.495117,
+            38.474548
+          ],
+          [
+            9.994385,
+            40.9729
+          ],
+          [
+            11.493896,
+            41.972168
+          ],
+          [
+            10.494141,
+            41.472656
+          ],
+          [
+            13.492188,
+            44.970276
+          ]
+        ]
+      },
+      "sharedMaskMinIoU": 0.997553
+    },
+    "方圆形": {
+      "count": 30,
+      "template": "方圆形/长/0",
+      "meanIoU": 0.999572,
+      "minIoU": 0.99886,
+      "worst": "方圆形/儿童款/4",
+      "worstRowEdgeP95PercentWidth": 0.195,
+      "worstRowEdgeMaxPercentWidth": 1.953,
+      "lengths": {
+        "儿童款": {
+          "count": 5,
+          "template": "方圆形/儿童款/3",
+          "meanIoU": 0.999493,
+          "minIoU": 0.999161,
+          "worst": "方圆形/儿童款/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 1.172
+        },
+        "短": {
+          "count": 5,
+          "template": "方圆形/短/2",
+          "meanIoU": 0.999593,
+          "minIoU": 0.999428,
+          "worst": "方圆形/短/1",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "中": {
+          "count": 5,
+          "template": "方圆形/中/2",
+          "meanIoU": 0.999691,
+          "minIoU": 0.999574,
+          "worst": "方圆形/中/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 1.172
+        },
+        "中长": {
+          "count": 5,
+          "template": "方圆形/中长/3",
+          "meanIoU": 0.99975,
+          "minIoU": 0.999656,
+          "worst": "方圆形/中长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "长": {
+          "count": 5,
+          "template": "方圆形/长/0",
+          "meanIoU": 0.999799,
+          "minIoU": 0.99972,
+          "worst": "方圆形/长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.391
+        },
+        "超长": {
+          "count": 5,
+          "template": "方圆形/超长/1",
+          "meanIoU": 0.999836,
+          "minIoU": 0.999755,
+          "worst": "方圆形/超长/2",
+          "worstRowEdgeP95PercentWidth": 0.0,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        }
+      },
+      "widthRange": [
+        5.800048828125,
+        13.5
+      ],
+      "heightRange": [
+        8.79998779296875,
+        45.0
+      ],
+      "dimensions": {
+        "儿童款": [
+          [
+            5.800049,
+            8.799988
+          ],
+          [
+            7.800049,
+            9.900024
+          ],
+          [
+            9.899902,
+            11.0
+          ],
+          [
+            8.800049,
+            11.0
+          ],
+          [
+            11.900146,
+            11.900024
+          ]
+        ],
+        "短": [
+          [
+            8.5,
+            12.5
+          ],
+          [
+            10.0,
+            14.5
+          ],
+          [
+            11.5,
+            15.0
+          ],
+          [
+            10.5,
+            14.5
+          ],
+          [
+            13.5,
+            16.0
+          ]
+        ],
+        "中": [
+          [
+            8.5,
+            20.0
+          ],
+          [
+            10.0,
+            22.0
+          ],
+          [
+            11.5,
+            23.5
+          ],
+          [
+            10.5,
+            22.0
+          ],
+          [
+            13.5,
+            24.0
+          ]
+        ],
+        "中长": [
+          [
+            8.5,
+            23.5
+          ],
+          [
+            10.0,
+            26.0
+          ],
+          [
+            11.5,
+            26.5
+          ],
+          [
+            10.5,
+            25.5
+          ],
+          [
+            13.5,
+            28.0
+          ]
+        ],
+        "长": [
+          [
+            8.5,
+            27.5
+          ],
+          [
+            10.0,
+            30.0
+          ],
+          [
+            11.5,
+            30.5
+          ],
+          [
+            10.5,
+            29.5
+          ],
+          [
+            13.5,
+            32.0
+          ]
+        ],
+        "超长": [
+          [
+            8.5,
+            39.5
+          ],
+          [
+            10.0,
+            43.0
+          ],
+          [
+            11.5,
+            43.5
+          ],
+          [
+            10.5,
+            42.5
+          ],
+          [
+            13.5,
+            45.0
+          ]
+        ]
+      },
+      "sharedMaskMinIoU": 0.998529
+    },
+    "方形": {
+      "count": 25,
+      "template": "方形/长/0",
+      "meanIoU": 0.999654,
+      "minIoU": 0.99911,
+      "worst": "方形/短/4",
+      "worstRowEdgeP95PercentWidth": 0.195,
+      "worstRowEdgeMaxPercentWidth": 2.734,
+      "lengths": {
+        "短": {
+          "count": 5,
+          "template": "方形/短/1",
+          "meanIoU": 0.999617,
+          "minIoU": 0.999414,
+          "worst": "方形/短/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 2.734
+        },
+        "中": {
+          "count": 5,
+          "template": "方形/中/3",
+          "meanIoU": 0.999714,
+          "minIoU": 0.999563,
+          "worst": "方形/中/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 2.148
+        },
+        "中长": {
+          "count": 5,
+          "template": "方形/中长/3",
+          "meanIoU": 0.999768,
+          "minIoU": 0.999616,
+          "worst": "方形/中长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.781
+        },
+        "长": {
+          "count": 5,
+          "template": "方形/长/0",
+          "meanIoU": 0.999771,
+          "minIoU": 0.999664,
+          "worst": "方形/长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.977
+        },
+        "超长": {
+          "count": 5,
+          "template": "方形/超长/1",
+          "meanIoU": 0.999848,
+          "minIoU": 0.999769,
+          "worst": "方形/超长/4",
+          "worstRowEdgeP95PercentWidth": 0.0,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        }
+      },
+      "widthRange": [
+        8.5,
+        13.5
+      ],
+      "heightRange": [
+        13.5,
+        45.0
+      ],
+      "dimensions": {
+        "短": [
+          [
+            8.5,
+            13.5
+          ],
+          [
+            10.0,
+            14.5
+          ],
+          [
+            11.5,
+            15.0
+          ],
+          [
+            10.5,
+            15.0
+          ],
+          [
+            13.5,
+            16.0
+          ]
+        ],
+        "中": [
+          [
+            8.5,
+            20.0
+          ],
+          [
+            10.0,
+            22.0
+          ],
+          [
+            11.5,
+            23.0
+          ],
+          [
+            10.5,
+            22.5
+          ],
+          [
+            13.5,
+            24.0
+          ]
+        ],
+        "中长": [
+          [
+            8.5,
+            24.0
+          ],
+          [
+            10.0,
+            26.0
+          ],
+          [
+            11.5,
+            27.0
+          ],
+          [
+            10.5,
+            26.5
+          ],
+          [
+            13.5,
+            28.0
+          ]
+        ],
+        "长": [
+          [
+            8.5,
+            28.0
+          ],
+          [
+            10.0,
+            30.0
+          ],
+          [
+            11.5,
+            31.0
+          ],
+          [
+            10.5,
+            30.5
+          ],
+          [
+            13.5,
+            32.0
+          ]
+        ],
+        "超长": [
+          [
+            8.5,
+            40.0
+          ],
+          [
+            10.0,
+            42.0
+          ],
+          [
+            11.5,
+            43.5
+          ],
+          [
+            10.5,
+            43.0
+          ],
+          [
+            13.5,
+            45.0
+          ]
+        ]
+      },
+      "sharedMaskMinIoU": 0.998444
+    },
+    "椭圆形": {
+      "count": 25,
+      "template": "椭圆形/长/3",
+      "meanIoU": 0.999631,
+      "minIoU": 0.999102,
+      "worst": "椭圆形/短/4",
+      "worstRowEdgeP95PercentWidth": 0.195,
+      "worstRowEdgeMaxPercentWidth": 0.977,
+      "lengths": {
+        "短": {
+          "count": 5,
+          "template": "椭圆形/短/0",
+          "meanIoU": 0.99956,
+          "minIoU": 0.999333,
+          "worst": "椭圆形/短/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "中": {
+          "count": 5,
+          "template": "椭圆形/中/1",
+          "meanIoU": 0.999727,
+          "minIoU": 0.999587,
+          "worst": "椭圆形/中/2",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "中长": {
+          "count": 5,
+          "template": "椭圆形/中长/3",
+          "meanIoU": 0.999735,
+          "minIoU": 0.99964,
+          "worst": "椭圆形/中长/2",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "长": {
+          "count": 5,
+          "template": "椭圆形/长/1",
+          "meanIoU": 0.999779,
+          "minIoU": 0.999662,
+          "worst": "椭圆形/长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "超长": {
+          "count": 5,
+          "template": "椭圆形/超长/3",
+          "meanIoU": 0.999831,
+          "minIoU": 0.999769,
+          "worst": "椭圆形/超长/4",
+          "worstRowEdgeP95PercentWidth": 0.0,
+          "worstRowEdgeMaxPercentWidth": 0.391
+        }
+      },
+      "widthRange": [
+        8.5,
+        13.5
+      ],
+      "heightRange": [
+        12.5,
+        45.0
+      ],
+      "dimensions": {
+        "短": [
+          [
+            8.5,
+            12.5
+          ],
+          [
+            10.0,
+            14.5
+          ],
+          [
+            11.5,
+            15.0
+          ],
+          [
+            10.5,
+            14.5
+          ],
+          [
+            13.5,
+            16.0
+          ]
+        ],
+        "中": [
+          [
+            8.5,
+            20.5
+          ],
+          [
+            10.0,
+            22.5
+          ],
+          [
+            11.5,
+            23.0
+          ],
+          [
+            10.5,
+            22.5
+          ],
+          [
+            13.5,
+            24.0
+          ]
+        ],
+        "中长": [
+          [
+            8.5,
+            24.5
+          ],
+          [
+            10.0,
+            26.0
+          ],
+          [
+            11.5,
+            26.5
+          ],
+          [
+            10.5,
+            26.0
+          ],
+          [
+            13.5,
+            28.0
+          ]
+        ],
+        "长": [
+          [
+            8.5,
+            29.0
+          ],
+          [
+            10.0,
+            31.0
+          ],
+          [
+            11.5,
+            31.0
+          ],
+          [
+            10.5,
+            31.0
+          ],
+          [
+            13.5,
+            32.0
+          ]
+        ],
+        "超长": [
+          [
+            8.5,
+            41.5
+          ],
+          [
+            10.0,
+            43.0
+          ],
+          [
+            11.5,
+            44.0
+          ],
+          [
+            10.5,
+            43.5
+          ],
+          [
+            13.5,
+            45.0
+          ]
+        ]
+      },
+      "sharedMaskMinIoU": 0.998614
+    },
+    "梯形": {
+      "count": 25,
+      "template": "梯形/长/3",
+      "meanIoU": 0.999573,
+      "minIoU": 0.998928,
+      "worst": "梯形/短/4",
+      "worstRowEdgeP95PercentWidth": 0.195,
+      "worstRowEdgeMaxPercentWidth": 1.172,
+      "lengths": {
+        "短": {
+          "count": 5,
+          "template": "梯形/短/1",
+          "meanIoU": 0.999556,
+          "minIoU": 0.999389,
+          "worst": "梯形/短/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 1.172
+        },
+        "中": {
+          "count": 5,
+          "template": "梯形/中/3",
+          "meanIoU": 0.999666,
+          "minIoU": 0.999499,
+          "worst": "梯形/中/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 1.172
+        },
+        "中长": {
+          "count": 5,
+          "template": "梯形/中长/3",
+          "meanIoU": 0.999713,
+          "minIoU": 0.999579,
+          "worst": "梯形/中长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.781
+        },
+        "长": {
+          "count": 5,
+          "template": "梯形/长/1",
+          "meanIoU": 0.999755,
+          "minIoU": 0.99965,
+          "worst": "梯形/长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.586
+        },
+        "超长": {
+          "count": 5,
+          "template": "梯形/超长/1",
+          "meanIoU": 0.999806,
+          "minIoU": 0.999699,
+          "worst": "梯形/超长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.391
+        }
+      },
+      "widthRange": [
+        8.5,
+        13.5
+      ],
+      "heightRange": [
+        13.5,
+        45.0
+      ],
+      "dimensions": {
+        "短": [
+          [
+            8.5,
+            13.5
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            11.5,
+            15.0
+          ],
+          [
+            10.5,
+            15.0
+          ],
+          [
+            13.5,
+            16.0
+          ]
+        ],
+        "中": [
+          [
+            8.5,
+            20.5
+          ],
+          [
+            10.0,
+            21.5
+          ],
+          [
+            11.5,
+            22.5
+          ],
+          [
+            10.5,
+            22.0
+          ],
+          [
+            13.5,
+            24.0
+          ]
+        ],
+        "中长": [
+          [
+            8.5,
+            24.5
+          ],
+          [
+            10.0,
+            25.5
+          ],
+          [
+            11.5,
+            26.5
+          ],
+          [
+            10.5,
+            26.0
+          ],
+          [
+            13.5,
+            28.0
+          ]
+        ],
+        "长": [
+          [
+            8.5,
+            28.5
+          ],
+          [
+            10.0,
+            30.0
+          ],
+          [
+            11.5,
+            30.5
+          ],
+          [
+            10.5,
+            30.0
+          ],
+          [
+            13.5,
+            32.0
+          ]
+        ],
+        "超长": [
+          [
+            8.5,
+            36.0
+          ],
+          [
+            10.0,
+            39.5
+          ],
+          [
+            11.5,
+            42.5
+          ],
+          [
+            10.5,
+            41.0
+          ],
+          [
+            13.5,
+            45.0
+          ]
+        ]
+      },
+      "sharedMaskMinIoU": 0.998464
+    },
+    "尖形": {
+      "count": 20,
+      "template": "尖形/中长/1",
+      "meanIoU": 0.999591,
+      "minIoU": 0.999355,
+      "worst": "尖形/中/2",
+      "worstRowEdgeP95PercentWidth": 0.195,
+      "worstRowEdgeMaxPercentWidth": 0.781,
+      "lengths": {
+        "中": {
+          "count": 5,
+          "template": "尖形/中/1",
+          "meanIoU": 0.999632,
+          "minIoU": 0.999386,
+          "worst": "尖形/中/2",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.977
+        },
+        "中长": {
+          "count": 5,
+          "template": "尖形/中长/1",
+          "meanIoU": 0.999654,
+          "minIoU": 0.999423,
+          "worst": "尖形/中长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.781
+        },
+        "长": {
+          "count": 5,
+          "template": "尖形/长/3",
+          "meanIoU": 0.999691,
+          "minIoU": 0.999548,
+          "worst": "尖形/长/4",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.391
+        },
+        "超长": {
+          "count": 5,
+          "template": "尖形/超长/3",
+          "meanIoU": 0.999795,
+          "minIoU": 0.999719,
+          "worst": "尖形/超长/2",
+          "worstRowEdgeP95PercentWidth": 0.195,
+          "worstRowEdgeMaxPercentWidth": 0.195
+        }
+      },
+      "widthRange": [
+        8.5,
+        13.5
+      ],
+      "heightRange": [
+        20.5,
+        45.0
+      ],
+      "dimensions": {
+        "中": [
+          [
+            8.5,
+            20.5
+          ],
+          [
+            10.0,
+            22.0
+          ],
+          [
+            11.5,
+            23.0
+          ],
+          [
+            10.5,
+            23.0
+          ],
+          [
+            13.5,
+            24.0
+          ]
+        ],
+        "中长": [
+          [
+            8.5,
+            24.0
+          ],
+          [
+            10.0,
+            25.5
+          ],
+          [
+            11.5,
+            27.0
+          ],
+          [
+            10.5,
+            26.5
+          ],
+          [
+            13.5,
+            28.0
+          ]
+        ],
+        "长": [
+          [
+            8.5,
+            28.0
+          ],
+          [
+            10.0,
+            29.5
+          ],
+          [
+            11.5,
+            31.0
+          ],
+          [
+            10.5,
+            32.0
+          ],
+          [
+            13.5,
+            32.0
+          ]
+        ],
+        "超长": [
+          [
+            8.5,
+            40.0
+          ],
+          [
+            10.0,
+            42.0
+          ],
+          [
+            11.5,
+            44.0
+          ],
+          [
+            10.5,
+            43.0
+          ],
+          [
+            13.5,
+            45.0
+          ]
+        ]
+      },
+      "sharedMaskMinIoU": 0.998669
+    }
+  }
+}

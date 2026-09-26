@@ -45,7 +45,7 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
       const mesh = new THREE.Mesh(model.geometry, material)
       mesh.position.set((index % 5 - 2) * columnGap, index < 5 ? rowGap / 2 : -rowGap / 2, 0)
       mesh.userData.nail = index
-      scene.add(mesh); meshes.push(mesh); materials.current.push(material)
+      scene.add(mesh); meshes.push(mesh); materials.current[index] = material
     }
     const resize = () => {
       const width = mount.clientWidth || 600, height = mount.clientHeight || 500
@@ -84,7 +84,7 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
       renderer.domElement.removeEventListener('pointerdown', down)
       renderer.domElement.removeEventListener('pointerup', up)
       renderer.domElement.removeEventListener('dblclick', fit)
-      for (const material of materials.current) { material.map?.dispose(); material.dispose() }
+      materials.current.forEach(material => { material.map?.dispose(); material.dispose() })
       materials.current = []
       renderer.dispose(); renderer.domElement.remove()
     }

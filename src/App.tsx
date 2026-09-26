@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import ThreeDPreview from './ThreeDPreview'
 import EditorCanvas from './EditorCanvas'
 import type { Tool } from './EditorCanvas'
-import { fingers, lengths, shapes } from './model'
+import { availableLengths, fingers, shapes } from './model'
 import { loadImage, newLayer, parseProject, renderDesign } from './design'
 import type { Layer, NailDesign } from './design'
-import { useCanvases, useModels, useProject } from './useEditor'
+import { useCanvases, useModels, useProject, useSurfaces } from './useEditor'
 import assets from './assets.json'
 import './editor.css'
+
+const ThreeDPreview = lazy(() => import('./ThreeDPreview'))
 
 const tools: { id: Tool; name: string; icon: string; hint: string }[] = [
   { id: 'select', name: '选择 / 移动', icon: '↖', hint: '拖动画布中的选中饰品' },
@@ -51,13 +52,14 @@ export default function App() {
   const [filter, setFilter] = useState('all')
   const [notice, setNotice] = useState('')
   const projectInput = useRef<HTMLInputElement>(null)
-  const { models, loaded, error: modelError, retry } = useModels(project.shape, project.length, selected % 5)
+  const { surfaces, error: surfaceError, retry: retrySurfaces } = useSurfaces(project.shape, project.length)
+  const { models, loaded, error: modelError, retry } = useModels(project.shape, project.length, view === '3D')
   const nails = useMemo(() => project.nails.map((nail, index) => index === selected && draft ? draft : nail), [project.nails, selected, draft])
-  const { canvases, error: renderError } = useCanvases(nails, models)
+  const { canvases, error: renderError } = useCanvases(nails, surfaces)
   const nail = nails[selected]
   const layer = nail.layers.find(candidate => candidate.id === layerId)
   const activeTool = tools.find(candidate => candidate.id === tool)!
-  const currentModel = models[selected % 5]
+  const currentModel = surfaces[selected % 5]
 
   const selectNail = useCallback((index: number) => { setSelected(index); setDraft(null); setLayerId('') }, [])
   const editNail = (update: (nail: NailDesign) => NailDesign, index = selected) => {
@@ -174,9 +176,10 @@ export default function App() {
           </div>
         </div>
         <div className="editor-stage">
-          {!models.some(Boolean) ? <div className="loading-state" role="status">{modelError || `正在读取 STL 并生成正交投影… ${loaded} / 5`}{modelError && <button onClick={retry}>重试加载</button>}</div> :
-            view === '3D' ? <ThreeDPreview models={models} canvases={canvases} selected={selected} onSelect={selectNail}/> :
-            currentModel ? <EditorCanvas key={`${project.shape}-${project.length}-${selected}-${tool}`} model={currentModel} canvas={canvases[selected]} design={nail} tool={tool} layerId={layerId} color={color} brush={brush} spacing={spacing} zoom={zoom} onSelectLayer={setLayerId} onPreview={setDraft} onCommit={next => editNail(() => next)} onCancel={() => setDraft(null)}/> : <div className="loading-state" role="status">正在读取当前手指 STL… {loaded} / 5</div>}
+          {view === '3D' ? <>
+            {models.some(Boolean) ? <Suspense fallback={<div className="loading-state" role="status">正在启动 3D 预览…</div>}><ThreeDPreview models={models} canvases={canvases} selected={selected} onSelect={selectNail}/></Suspense> : <div className="loading-state" role="status">{modelError || `正在加载 3D 模型… ${loaded} / 5`}</div>}
+            {modelError && <div role="alert">{modelError}<button onClick={retry}>重试加载</button></div>}
+          </> : currentModel ? <EditorCanvas key={`${project.shape}-${project.length}-${selected}-${tool}`} model={currentModel} canvas={canvases[selected]} design={nail} tool={tool} layerId={layerId} color={color} brush={brush} spacing={spacing} zoom={zoom} onSelectLayer={setLayerId} onPreview={setDraft} onCommit={next => editNail(() => next)} onCancel={() => setDraft(null)}/> : <div className="loading-state" role="status">{surfaceError || '正在加载轮廓…'}{surfaceError && <button onClick={retrySurfaces}>重试加载</button>}</div>}
         </div>
         <div className="nail-strip">{project.nails.map((entry, index) => <button key={index} title={nailName(index)} aria-label={nailName(index)} aria-pressed={selected === index} className={selected === index ? 'active' : ''} onClick={() => selectNail(index)}><Thumbnail canvas={canvases[index]}/><span>{index < 5 ? '左' : '右'} {fingers[index % 5]}</span><small>{entry.layers.length} 层</small></button>)}</div>
         <div className="canvas-bottom"><span>{project.shape} · {project.length}款 · {nail.layers.length} 个图层</span><span role="status">{renderError || saveStatus}</span></div>
@@ -185,9 +188,9 @@ export default function App() {
         <div className="panel-head"><div><span className="eyebrow">CURRENT TOOL</span><h2>{activeTool.name}</h2></div></div>
         <p className="tool-description">{activeTool.hint}</p>
         {tool === 'shape' && <>
-          <div className="shape-grid">{shapes.map(shape => <button key={shape} className={`shape-card ${project.shape === shape ? 'active' : ''}`} onClick={() => { setDraft(null); commit(previous => ({ ...previous, shape, length: shape === '尖形' && previous.length === '短' ? '中' : previous.length })) }}><strong>{shape}</strong><small>真实 STL</small></button>)}</div>
-          <div className="length-picker"><label>长度 · 应用到十指</label><div>{lengths.map(length => <button key={length} disabled={project.shape === '尖形' && length === '短'} className={project.length === length ? 'active' : ''} onClick={() => { setDraft(null); commit(previous => ({ ...previous, length })) }}>{length}</button>)}</div></div>
-          <p className="small-note">画布轮廓直接投影当前手指的 STL 三角面；长度和宽度保留模型比例。</p>
+          <div className="shape-grid">{shapes.map(shape => <button key={shape} className={`shape-card ${project.shape === shape ? 'active' : ''}`} onClick={() => { setDraft(null); commit(previous => ({ ...previous, shape, length: availableLengths(shape).includes(previous.length) ? previous.length : '中' })) }}><strong>{shape}</strong><small>真实 STL</small></button>)}</div>
+          <div className="length-picker"><label>长度 · 应用到十指</label><div>{availableLengths(project.shape).map(length => <button key={length} className={project.length === length ? 'active' : ''} onClick={() => { setDraft(null); commit(previous => ({ ...previous, length })) }}>{length}</button>)}</div></div>
+          <p className="small-note">轮廓保留当前手指的真实宽高与甲型，甲根在上、甲尖在下。</p>
         </>}
         {tool === 'base' && <><ColorControl label="纯色底胶" value={nail.color} onChange={value => editNail(previous => ({ ...previous, color: value, base: '' }))}/><button className="panel-button" onClick={() => commit(previous => ({ ...previous, nails: previous.nails.map(entry => ({ ...entry, base: nail.base, color: nail.color })) }))}>底胶应用到十指</button></>}
         {tool === 'french' && <>

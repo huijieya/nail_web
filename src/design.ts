@@ -1,3 +1,5 @@
+import { availableLengths, shapes } from './model'
+
 export type Point = { x: number; y: number }
 export type Stroke = { points: Point[]; size: number }
 export type Layer = {
@@ -18,7 +20,7 @@ export function parseProject(raw: string): Project {
   const number = (candidate: unknown, min: number, max: number) => typeof candidate === 'number' && Number.isFinite(candidate) && candidate >= min && candidate <= max
   const point = (candidate: Point) => candidate && number(candidate.x, -2, 3) && number(candidate.y, -2, 3)
   const color = (candidate: unknown) => typeof candidate === 'string' && /^#[0-9a-f]{6}$/i.test(candidate)
-  if (!value || value.version !== 1 || typeof value.name !== 'string' || value.name.length > 100 || !['杏仁形','方圆形','方形','椭圆形','梯形','尖形'].includes(value.shape) || !['短','中','中长','长','超长'].includes(value.length) || (value.shape === '尖形' && value.length === '短') || !Array.isArray(value.nails) || value.nails.length !== 10) throw new Error('不是有效的美甲项目文件')
+  if (!value || value.version !== 1 || typeof value.name !== 'string' || value.name.length > 100 || !shapes.includes(value.shape) || !availableLengths(value.shape).includes(value.length) || !Array.isArray(value.nails) || value.nails.length !== 10) throw new Error('不是有效的美甲项目文件')
   for (const nail of value.nails) {
     if (!nail || !validSource(nail.base) || !color(nail.color) || !Array.isArray(nail.layers) || nail.layers.length > 200) throw new Error('画稿数据无效')
     const ids = new Set<string>()

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { NailModel } from './model'
-import { loadModels } from './model'
+import type { NailModel, NailSurface } from './model'
+import { loadModels, loadSurfaces } from './model'
 import { newProject, parseProject, renderDesign, storageKey } from './design'
 import type { NailDesign, Project } from './design'
 
@@ -52,31 +52,49 @@ export function useProject() {
   return { project, commit, undo, redo, canUndo: !!history.past.length, canRedo: !!history.future.length, saveStatus }
 }
 
-export function useModels(shape: string, length: string, priority = 2) {
-  const [models, setModels] = useState<Array<NailModel | undefined>>([])
+const emptyModels: Array<NailModel | undefined> = []
+const emptySurfaces: NailSurface[] = []
+
+export function useSurfaces(shape: string, length: string) {
+  const key = `${shape}/${length}`
+  const [result, setResult] = useState<{ key: string; surfaces: NailSurface[] }>({ key: '', surfaces: [] })
+  const [error, setError] = useState('')
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    let active = true
+    setError('')
+    loadSurfaces(shape, length).then(surfaces => {
+      if (active) setResult({ key, surfaces })
+    }).catch(() => { if (active) setError('预生成轮廓加载失败，请重试') })
+    return () => { active = false }
+  }, [shape, length, key, retry])
+  return { surfaces: result.key === key ? result.surfaces : emptySurfaces, error, retry: () => setRetry(value => value + 1) }
+}
+
+export function useModels(shape: string, length: string, enabled: boolean) {
+  const key = `${shape}/${length}`
+  const [result, setResult] = useState<{ key: string; models: Array<NailModel | undefined> }>({ key: '', models: [] })
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(0)
   const [retry, setRetry] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
-    let owned: NailModel[] = []
-    setModels([]); setLoaded(0); setError('')
-    loadModels(shape, length, controller.signal, priority, (finger, model) => {
+    const owned: NailModel[] = []
+    setResult({ key, models: [] }); setLoaded(0); setError('')
+    if (!enabled) return
+    loadModels(shape, length, controller.signal, (finger, model) => {
       owned.push(model)
-      setModels(previous => { const next = [...previous]; next[finger] = model; return next })
+      setResult(previous => { const models = [...previous.models]; models[finger] = model; return { key, models } })
       setLoaded(value => value + 1)
-    }).then(result => {
-      if (controller.signal.aborted) { result.forEach(model => model?.geometry.dispose()); return }
-      owned = result.filter((model): model is NailModel => Boolean(model)); setModels(result)
     }).catch(reason => { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : '模型加载失败') })
     return () => { controller.abort(); owned.forEach(model => model.geometry.dispose()) }
-  }, [shape, length, priority, retry])
-  return { models, loaded, error, retry: () => setRetry(value => value + 1) }
+  }, [shape, length, key, enabled, retry])
+  return { models: enabled && result.key === key ? result.models : emptyModels, loaded, error, retry: () => setRetry(value => value + 1) }
 }
 
-export function useCanvases(nails: NailDesign[], models: Array<NailModel | undefined>) {
-  const cache = useMemo(() => new WeakMap<NailDesign, Promise<HTMLCanvasElement>>(), [models])
-  const [result, setResult] = useState<{ models: Array<NailModel | undefined>; canvases: Array<HTMLCanvasElement | undefined> }>({ models: [], canvases: [] })
+export function useCanvases(nails: NailDesign[], models: Array<NailSurface | undefined>) {
+  const cache = useMemo(() => new WeakMap<NailSurface, WeakMap<NailDesign, Promise<HTMLCanvasElement>>>(), [])
+  const [result, setResult] = useState<{ models: Array<NailSurface | undefined>; canvases: Array<HTMLCanvasElement | undefined> }>({ models: [], canvases: [] })
   const [error, setError] = useState('')
   const revision = useRef(0)
   useEffect(() => {
@@ -86,8 +104,10 @@ export function useCanvases(nails: NailDesign[], models: Array<NailModel | undef
     Promise.all(nails.map((design, index) => {
       const model = models[index % 5]
       if (!model) return Promise.resolve(undefined)
-      let pending = cache.get(design)
-      if (!pending) { pending = renderDesign(design, model.mask); cache.set(design, pending); pending.catch(() => cache.delete(design)) }
+      let designs = cache.get(model)
+      if (!designs) { designs = new WeakMap(); cache.set(model, designs) }
+      let pending = designs.get(design)
+      if (!pending) { pending = renderDesign(design, model.mask); designs.set(design, pending); pending.catch(() => designs.delete(design)) }
       return pending
     })).then(canvases => { if (current === revision.current) setResult({ models, canvases }) })
       .catch(reason => { if (current === revision.current) setError(reason instanceof Error ? reason.message : '画稿渲染失败') })

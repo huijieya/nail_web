@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 import type { PointerEvent } from 'react'
-import type { NailModel } from './model'
+import type { NailSurface } from './model'
 import type { NailDesign, Layer, Point } from './design'
 import { newLayer } from './design'
 
 export type Tool = 'select' | 'shape' | 'base' | 'french' | 'dots' | 'eraser' | 'sticker2d' | 'sticker3d' | 'upload'
 type Props = {
-  model: NailModel; canvas?: HTMLCanvasElement; design: NailDesign; tool: Tool; layerId: string
+  model: NailSurface; canvas?: HTMLCanvasElement; design: NailDesign; tool: Tool; layerId: string
   color: string; brush: number; spacing: number; zoom: number
   onSelectLayer: (id: string) => void
   onPreview: (design: NailDesign) => void; onCommit: (design: NailDesign) => void; onCancel: () => void
