@@ -104,5 +104,5 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
   }, [selected, models])
 
   const count = models.filter(Boolean).length
-  return <div className="model-view"><div className="three-mount" ref={mountRef}/>{error && <div role="alert" className="model-error">{error}</div>}<div className="model-progress">{count} / 5 个手指模型 · 2D 与 3D 会渐进更新</div><button className="view-reset" onClick={() => reset.current()}>重置视角</button><span className="view-help">拖动旋转 · 滚轮缩放 · 点击选择指甲</span></div>
+  return <div className="model-view"><div className="three-mount" ref={mountRef}/>{error && <div role="alert" className="model-error">{error}</div>}<button className="view-reset" onClick={() => reset.current()}>重置视角</button><span className="view-help">拖动旋转 · 滚轮缩放 · 点击选择指甲</span></div>
 }

@@ -29,6 +29,13 @@ export function parseProject(raw: string): Project {
       ids.add(layer.id)
     }
   }
+  for (const nail of value.nails) {
+    for (const kind of ['french', 'dots'] as const) {
+      let last = -1
+      nail.layers.forEach((layer, index) => { if (layer.kind === kind) last = index })
+      if (last >= 0) nail.layers = nail.layers.filter((layer, index) => layer.kind !== kind || index === last)
+    }
+  }
   return value
 }
 
@@ -61,6 +68,7 @@ export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement) 
   const context = canvas.getContext('2d')!
   context.fillStyle = design.color
   context.fillRect(0, 0, width, height)
+  console.log('design', design)
   if (design.base) context.drawImage(loaded.get(design.base)!, 0, 0, width, height)
   for (const layer of design.layers) {
     if (!layer.visible) continue

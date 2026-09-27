@@ -12,8 +12,8 @@ import './editor.css'
 const ThreeDPreview = lazy(() => import('./ThreeDPreview'))
 
 const tools: { id: Tool; name: string; icon: string; hint: string }[] = [
-  { id: 'select', name: '选择 / 移动', icon: '↖', hint: '拖动画布中的选中饰品' },
-  { id: 'shape', name: '甲型', icon: '◇', hint: '选择真实 STL 甲型和长度' },
+  { id: 'select', name: '选择 / 移动', icon: '↖', hint: '选择图层拖动画布中的选中饰品' },
+  { id: 'shape', name: '甲型', icon: '◇', hint: '选择甲型和长度' },
   { id: 'base', name: '底胶', icon: '◐', hint: '给当前指甲设置底胶' },
   { id: 'french', name: '法式', icon: '⌒', hint: '添加可调节的微笑线' },
   { id: 'dots', name: '波点', icon: '⠿', hint: '点击或拖动绘制波点' },
@@ -58,6 +58,8 @@ export default function App() {
   const { canvases, error: renderError } = useCanvases(nails, surfaces)
   const nail = nails[selected]
   const layer = nail.layers.find(candidate => candidate.id === layerId)
+  const frenchLayer = nail.layers.find(candidate => candidate.kind === 'french')
+  const dotsLayer = nail.layers.find(candidate => candidate.kind === 'dots')
   const activeTool = tools.find(candidate => candidate.id === tool)!
   const currentModel = surfaces[selected % 5]
 
@@ -68,6 +70,24 @@ export default function App() {
   }
   const patchLayer = (patch: Partial<Layer>) => editNail(previous => ({ ...previous, layers: previous.layers.map(entry => entry.id === layerId ? { ...entry, ...patch } : entry) }))
   const addLayer = (entry: Layer) => { editNail(previous => ({ ...previous, layers: [...previous.layers, entry] })); setLayerId(entry.id) }
+  const replaceExclusiveLayer = (entry: Layer) => {
+    const existing = nail.layers.find(candidate => candidate.kind === entry.kind)
+    const targetId = existing?.id || entry.id
+    editNail(previous => {
+      const existingIndex = previous.layers.findIndex(candidate => candidate.kind === entry.kind)
+      const layers = previous.layers.filter(candidate => candidate.kind !== entry.kind)
+      const next = { ...entry, id: targetId }
+      layers.splice(existingIndex < 0 ? layers.length : Math.min(existingIndex, layers.length), 0, next)
+      return { ...previous, layers }
+    })
+    setLayerId(targetId)
+  }
+  const removeExclusiveLayer = (kind: Layer['kind']) => {
+    if (!nail.layers.some(entry => entry.kind === kind)) return
+    editNail(previous => ({ ...previous, layers: previous.layers.filter(entry => entry.kind !== kind) }))
+    setLayerId('')
+  }
+  const patchExclusiveLayer = (kind: Layer['kind'], patch: Partial<Layer>) => editNail(previous => ({ ...previous, layers: previous.layers.map(entry => entry.kind === kind ? { ...entry, ...patch } : entry) }))
   const removeLayer = () => { if (layer) editNail(previous => ({ ...previous, layers: previous.layers.filter(entry => entry.id !== layerId) })); setLayerId('') }
   const moveLayer = (direction: number) => editNail(previous => {
     const layers = [...previous.layers], index = layers.findIndex(entry => entry.id === layerId), destination = index + direction
@@ -77,8 +97,8 @@ export default function App() {
   })
   const addFrench = (src = '') => {
     const entry = newLayer('french', src ? assetName(src) : '法式微笑线')
-    entry.color = color; entry.depth = depth; entry.curve = curve; entry.src = src
-    addLayer(entry)
+    entry.color = frenchLayer?.color || color; entry.depth = frenchLayer?.depth || depth; entry.curve = frenchLayer?.curve || curve; entry.src = src
+    replaceExclusiveLayer(entry)
   }
   const addImage = (src: string, name: string) => {
     const entry = newLayer('image', name); entry.src = src; addLayer(entry)
@@ -141,7 +161,11 @@ export default function App() {
     for (let row = .1; row < .95; row += step / ratio) {
       for (let column = .1; column < .95; column += step) entry.points.push({ x: column, y: row })
     }
-    addLayer(entry)
+    replaceExclusiveLayer(entry)
+  }
+  const addHandDots = () => {
+    const entry = newLayer('dots', '手绘波点'); entry.color = dotsLayer?.color || color; entry.size = dotsLayer?.size || brush
+    replaceExclusiveLayer(entry)
   }
   const assetCategories = tool === 'base' ? ['base_coat_pink','base_coat_purple'] : tool === 'french' ? ['base_coat_french'] : tool === 'sticker2d' ? ['3D_accessory_shell'] : tool === 'sticker3d' ? ['3D_accessory_metal'] : []
   const visibleAssets = assets.filter(asset => assetCategories.includes(asset.category) && (filter === 'all' || asset.category === filter) && assetName(asset.src).includes(search))
@@ -149,7 +173,7 @@ export default function App() {
 
   return <main className="app-shell editor-shell">
     <header className="topbar">
-      <div className="brand-block"><div className="brand-mark"><span/><span/><span/></div><div><div className="brand-name">NAIL<span>STUDIO</span></div><div className="brand-caption">DIGITAL NAIL DESIGNER</div></div></div>
+      <div className="brand-block"><div><div className="brand-name">3D<span>渲染</span></div></div></div>
       <input className="project-name" aria-label="项目名称" maxLength={100} value={project.name} onChange={event => commit(previous => ({ ...previous, name: event.target.value }))}/>
       <div className="top-actions">
         <button className="ghost-button" disabled={!canUndo || !!draft} onClick={() => { setDraft(null); undo() }} title="⌘/Ctrl Z">↶ 撤销</button>
@@ -164,7 +188,6 @@ export default function App() {
       <aside className="left-rail">
         <div className="rail-heading">TOOLS</div>
         <nav>{tools.map(entry => <button key={entry.id} className={`tool-button ${tool === entry.id ? 'active' : ''}`} title={entry.hint} onClick={() => selectTool(entry.id)}><span className="tool-icon">{entry.icon}</span>{entry.name}</button>)}</nav>
-        <div className="rail-footer"><p className="small-note">单指独立设计<br/>修改后自动保存到本机</p></div>
       </aside>
       <section className="canvas-column">
         <div className="canvas-toolbar">
@@ -188,33 +211,31 @@ export default function App() {
         <div className="panel-head"><div><span className="eyebrow">CURRENT TOOL</span><h2>{activeTool.name}</h2></div></div>
         <p className="tool-description">{activeTool.hint}</p>
         {tool === 'shape' && <>
-          <div className="shape-grid">{shapes.map(shape => <button key={shape} className={`shape-card ${project.shape === shape ? 'active' : ''}`} onClick={() => { setDraft(null); commit(previous => ({ ...previous, shape, length: availableLengths(shape).includes(previous.length) ? previous.length : '中' })) }}><strong>{shape}</strong><small>真实 STL</small></button>)}</div>
-          <div className="length-picker"><label>长度 · 应用到十指</label><div>{availableLengths(project.shape).map(length => <button key={length} className={project.length === length ? 'active' : ''} onClick={() => { setDraft(null); commit(previous => ({ ...previous, length })) }}>{length}</button>)}</div></div>
-          <p className="small-note">轮廓保留当前手指的真实宽高与甲型，甲根在上、甲尖在下。</p>
+          <div className="shape-grid">{shapes.map(shape => <button key={shape} className={`shape-card ${project.shape === shape ? 'active' : ''}`} onClick={() => { setDraft(null); commit(previous => ({ ...previous, shape, length: availableLengths(shape).includes(previous.length) ? previous.length : '中' })) }}><strong>{shape}</strong></button>)}</div>
+          <div className="length-picker"><label>十指长度</label><div>{availableLengths(project.shape).map(length => <button key={length} className={project.length === length ? 'active' : ''} onClick={() => { setDraft(null); commit(previous => ({ ...previous, length })) }}>{length}</button>)}</div></div>
         </>}
         {tool === 'base' && <><ColorControl label="纯色底胶" value={nail.color} onChange={value => editNail(previous => ({ ...previous, color: value, base: '' }))}/><button className="panel-button" onClick={() => commit(previous => ({ ...previous, nails: previous.nails.map(entry => ({ ...entry, base: nail.base, color: nail.color })) }))}>底胶应用到十指</button></>}
         {tool === 'french' && <>
-          <ColorControl label="法式颜色" value={layer?.kind === 'french' ? layer.color : color} onChange={value => { setColor(value); if (layer?.kind === 'french') patchLayer({ color: value, src: '' }) }}/>
-          <Range label="甲尖覆盖" value={layer?.kind === 'french' ? layer.depth : depth} min={.05} max={.6} step={.01} onChange={value => { setDepth(value); if (layer?.kind === 'french') patchLayer({ depth: value }) }}/>
-          <Range label="微笑线弧度" value={layer?.kind === 'french' ? layer.curve : curve} min={0} max={.35} step={.01} onChange={value => { setCurve(value); if (layer?.kind === 'french') patchLayer({ curve: value }) }}/>
-          <button className="panel-button" onClick={() => addFrench()}>＋ 添加法式图层</button>
+          <ColorControl label="法式颜色" value={frenchLayer?.color || color} onChange={value => { setColor(value); if (frenchLayer) patchExclusiveLayer('french', { color: value, src: '' }) }}/>
+          <Range label="甲尖覆盖" value={frenchLayer?.depth ?? depth} min={.05} max={.6} step={.01} onChange={value => { setDepth(value); if (frenchLayer) patchExclusiveLayer('french', { depth: value }) }}/>
+          <Range label="微笑线弧度" value={frenchLayer?.curve ?? curve} min={0} max={.35} step={.01} onChange={value => { setCurve(value); if (frenchLayer) patchExclusiveLayer('french', { curve: value }) }}/>
         </>}
         {tool === 'dots' && <>
-          <ColorControl label="波点颜色" value={layer?.kind === 'dots' ? layer.color : color} onChange={value => { setColor(value); if (layer?.kind === 'dots') patchLayer({ color: value }) }}/>
-          <Range label="波点直径" value={layer?.kind === 'dots' ? layer.size : brush} min={.01} max={.18} step={.005} onChange={value => { setBrush(value); if (layer?.kind === 'dots') patchLayer({ size: value }) }}/>
+          <ColorControl label="波点颜色" value={dotsLayer?.color || color} onChange={value => { setColor(value); if (dotsLayer) patchExclusiveLayer('dots', { color: value }) }}/>
+          <Range label="波点直径" value={dotsLayer?.size ?? brush} min={.01} max={.18} step={.005} onChange={value => { setBrush(value); if (dotsLayer) patchExclusiveLayer('dots', { size: value }) }}/>
           <Range label="间距倍数" value={spacing} min={1.2} max={5} step={.1} onChange={setSpacing} suffix="×"/>
           <button className="panel-button" onClick={addDotGrid}>生成均匀波点</button>
-          <button className="panel-button secondary" onClick={() => { const entry = newLayer('dots', '手绘波点'); entry.color = color; entry.size = brush; addLayer(entry) }}>新建手绘波点层</button>
-          <p className="small-note">点击落点，拖动连续绘制；每次笔画可独立撤销。</p>
+          <button className="panel-button secondary" onClick={addHandDots}>清空并新建手绘波点层</button>
+          <p className="small-note">手绘波点：点击落点或拖动连续绘制，每次笔画可独立撤销。</p>
         </>}
         {tool === 'eraser' && <><Range label="橡皮擦直径" value={brush} min={.02} max={.5} step={.01} onChange={setBrush}/><p className="small-note">{layer ? `正在擦除「${layer.name}」` : '请先在下方选择一个图层'}。擦除后露出下面的图层，底胶保留。</p></>}
         {tool === 'upload' && <label className="dropzone"><input type="file" accept="image/png,image/jpeg,image/webp" onChange={onUpload}/><span className="upload-icon">↥</span><strong>选择本地图片</strong><small>PNG / JPG / WEBP · 最大 12 MB</small></label>}
-        {tool === 'select' && <p className="small-note">在下方选中图片图层，再在画布中拖动移动；使用图层属性调整位置、尺寸和角度。</p>}
+        {tool === 'select' && <p className="small-note">选中图层后，可移动该图层的饰品，也可进行上移、下移等操作。</p>}
         {tool === 'sticker3d' && <p className="small-note">当前素材库提供饰品图片，以贴图叠加到曲面；不含饰品实体模型。</p>}
         {hasAssets && <div className="material-library">
           <input className="asset-search" placeholder="搜索素材名称或编号" aria-label="搜索素材" value={search} onChange={event => setSearch(event.target.value)}/>
           {assetCategories.length > 1 && <div className="panel-tabs">{['all', ...assetCategories].map(category => <button key={category} className={filter === category ? 'active' : ''} onClick={() => setFilter(category)}>{category === 'all' ? '全部' : categoryNames[category]}</button>)}</div>}
-          <div className="asset-grid">{visibleAssets.map(asset => <button key={asset.src} className={`asset-card ${nail.base === asset.src ? 'selected' : ''}`} title={`${assetName(asset.src)} · ${tool === 'base' ? '应用于当前指甲' : '添加可编辑图层'}`} onClick={() => { if (tool === 'base') editNail(previous => ({ ...previous, base: asset.src })); else if (tool === 'french') addFrench(asset.src); else addImage(asset.src, assetName(asset.src)) }}><span className="asset-image"><img loading="lazy" src={asset.src} alt={assetName(asset.src)}/></span></button>)}</div>
+          <div className="asset-grid">{tool === 'french' && <button className="asset-card asset-none" title="不设置法式" onClick={() => removeExclusiveLayer('french')}><span className="asset-image">无</span></button>}{visibleAssets.map(asset => <button key={asset.src} className={`asset-card ${nail.base === asset.src ? 'selected' : ''}`} title={`${assetName(asset.src)} · ${tool === 'base' ? '应用于当前指甲' : '替换当前法式图层'}`} onClick={() => { if (tool === 'base') editNail(previous => ({ ...previous, base: asset.src })); else if (tool === 'french') addFrench(asset.src); else addImage(asset.src, assetName(asset.src)) }}><span className="asset-image"><img loading="lazy" src={asset.src} alt={assetName(asset.src)}/></span></button>)}</div>
           {visibleAssets.length === 0 && <p className="small-note">没有匹配的素材</p>}
           <p className="small-note">{visibleAssets.length} 个素材 · 点击应用</p>
         </div>}

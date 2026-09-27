@@ -36,7 +36,7 @@ export function useProject() {
     if (!canSave) return
     setSaveStatus('保存中…')
     const timeout = window.setTimeout(() => {
-      try { localStorage.setItem(storageKey, JSON.stringify(project)); setSaveStatus('已保存到本机') }
+      try { localStorage.setItem(storageKey, JSON.stringify(project)); setSaveStatus('已保存') }
       catch { setSaveStatus('本地存储不足，请导出项目备份') }
     }, 450)
     const saveOnExit = () => {

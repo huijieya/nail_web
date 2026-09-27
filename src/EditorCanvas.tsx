@@ -33,7 +33,8 @@ export default function EditorCanvas(props: Props) {
     const draft = structuredClone(design)
     let layer = draft.layers.find(candidate => candidate.id === layerId)
     if (tool === 'dots') {
-      if (!layer || layer.kind !== 'dots' || !layer.visible) {
+      layer = draft.layers.find(candidate => candidate.kind === 'dots')
+      if (!layer) {
         layer = newLayer('dots', '手绘波点'); layer.color = color; layer.size = brush
         draft.layers.push(layer); onSelectLayer(layer.id)
       }
@@ -84,6 +85,5 @@ export default function EditorCanvas(props: Props) {
       <canvas aria-label="指甲编辑画布" ref={canvasRef} onPointerDown={begin} onPointerMove={move} onPointerUp={event => finish(event)} onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => { if (gesture.current) finish(event, true) }} style={{ cursor: tool === 'dots' || tool === 'eraser' ? 'crosshair' : 'move' }}/>
       {selected?.kind === 'image' && selected.visible && <div className="image-anchor" style={{ left: `${selected.x * 100}%`, top: `${selected.y * 100}%` }}>＋</div>}
     </div>
-    <p className="drawing-direction">甲根在上 · 甲尖在下</p>
   </div>
 }
