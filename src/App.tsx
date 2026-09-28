@@ -7,6 +7,7 @@ import { loadImage, newLayer, parseProject, renderDesign } from './design'
 import type { Layer, NailDesign } from './design'
 import { useCanvases, useModels, useProject, useSurfaces } from './useEditor'
 import assets from './assets.json'
+import { materialCrop } from './materials'
 import './editor.css'
 
 const ThreeDPreview = lazy(() => import('./ThreeDPreview'))
@@ -64,6 +65,12 @@ export default function App() {
   const currentModel = surfaces[selected % 5]
 
   const selectNail = useCallback((index: number) => { setSelected(index); setDraft(null); setLayerId('') }, [])
+  const clearDesign = () => {
+    setDraft(null)
+    setLayerId('')
+    commit(previous => ({ ...previous, nails: previous.nails.map(() => ({ base: '', color: '#ffffff', layers: [] })) }))
+    setNotice('已清空十指设计，保留甲型和长度；可撤销恢复')
+  }
   const editNail = (update: (nail: NailDesign) => NailDesign, index = selected) => {
     setDraft(null)
     commit(previous => ({ ...previous, nails: previous.nails.map((entry, position) => position === index ? update(entry) : entry) }))
@@ -178,6 +185,7 @@ export default function App() {
       <div className="top-actions">
         <button className="ghost-button" disabled={!canUndo || !!draft} onClick={() => { setDraft(null); undo() }} title="⌘/Ctrl Z">↶ 撤销</button>
         <button className="ghost-button" disabled={!canRedo || !!draft} onClick={() => { setDraft(null); redo() }} title="⌘/Ctrl Shift Z">↷ 重做</button>
+        <button className="ghost-button" disabled={!!draft} onClick={clearDesign} title="清空全部图层，保留甲型和长度，可撤销">清空</button>
         <button className="ghost-button" onClick={() => projectInput.current?.click()}>打开项目</button>
         <input hidden type="file" accept=".json" ref={projectInput} onChange={importProject}/>
         <button className="ghost-button" disabled={!currentModel || !!draft} onClick={exportPng}>导出 PNG</button>
@@ -235,7 +243,18 @@ export default function App() {
         {hasAssets && <div className="material-library">
           <input className="asset-search" placeholder="搜索素材名称或编号" aria-label="搜索素材" value={search} onChange={event => setSearch(event.target.value)}/>
           {assetCategories.length > 1 && <div className="panel-tabs">{['all', ...assetCategories].map(category => <button key={category} className={filter === category ? 'active' : ''} onClick={() => setFilter(category)}>{category === 'all' ? '全部' : categoryNames[category]}</button>)}</div>}
-          <div className="asset-grid">{tool === 'french' && <button className="asset-card asset-none" title="不设置法式" onClick={() => removeExclusiveLayer('french')}><span className="asset-image">无</span></button>}{visibleAssets.map(asset => <button key={asset.src} className={`asset-card ${nail.base === asset.src ? 'selected' : ''}`} title={`${assetName(asset.src)} · ${tool === 'base' ? '应用于当前指甲' : '替换当前法式图层'}`} onClick={() => { if (tool === 'base') editNail(previous => ({ ...previous, base: asset.src })); else if (tool === 'french') addFrench(asset.src); else addImage(asset.src, assetName(asset.src)) }}><span className="asset-image"><img loading="lazy" src={asset.src} alt={assetName(asset.src)}/></span></button>)}</div>
+          <div className={`asset-grid ${tool === 'base' || tool === 'french' ? 'polish-grid' : ''}`}>
+            {tool === 'french' && <button className={`asset-card asset-none ${!frenchLayer ? 'selected' : ''}`} aria-pressed={!frenchLayer} title="不设置法式" onClick={() => removeExclusiveLayer('french')}><span className="asset-image">无</span><span className="asset-name">无</span></button>}
+            {visibleAssets.map(asset => {
+              const polish = tool === 'base' || tool === 'french'
+              const selected = tool === 'base' ? nail.base === asset.src : tool === 'french' ? frenchLayer?.src === asset.src : false
+              const crop = materialCrop(asset.src)
+              return <button key={asset.src} className={`asset-card ${selected ? 'selected' : ''}`} aria-pressed={polish ? selected : undefined} title={`${assetName(asset.src)} · ${tool === 'base' ? '应用于当前指甲' : tool === 'french' ? '替换当前法式图层' : '添加可编辑图层'}`} onClick={() => { if (tool === 'base') editNail(previous => ({ ...previous, base: asset.src })); else if (tool === 'french') addFrench(asset.src); else addImage(asset.src, assetName(asset.src)) }}>
+                <span className="asset-image"><img loading="lazy" src={asset.src} alt={assetName(asset.src)} style={polish ? { position: 'absolute', width: `${100 / crop.width}%`, height: `${100 / crop.height}%`, left: `${-100 * crop.x / crop.width}%`, top: `${-100 * crop.y / crop.height}%` } : undefined}/></span>
+                {polish && <span className="asset-name">{assetName(asset.src)}</span>}
+              </button>
+            })}
+          </div>
           {visibleAssets.length === 0 && <p className="small-note">没有匹配的素材</p>}
           <p className="small-note">{visibleAssets.length} 个素材 · 点击应用</p>
         </div>}

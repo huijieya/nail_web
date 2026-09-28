@@ -1,4 +1,5 @@
 import { availableLengths, shapes } from './model'
+import { materialCrop } from './materials'
 
 export type Point = { x: number; y: number }
 export type Stroke = { points: Point[]; size: number }
@@ -69,7 +70,11 @@ export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement) 
   context.fillStyle = design.color
   context.fillRect(0, 0, width, height)
   console.log('design', design)
-  if (design.base) context.drawImage(loaded.get(design.base)!, 0, 0, width, height)
+  if (design.base) {
+    const image = loaded.get(design.base)!
+    const crop = materialCrop(design.base)
+    context.drawImage(image, image.naturalWidth * crop.x, image.naturalHeight * crop.y, image.naturalWidth * crop.width, image.naturalHeight * crop.height, 0, 0, width, height)
+  }
   for (const layer of design.layers) {
     if (!layer.visible) continue
     const surface = makeCanvas(width, height)
