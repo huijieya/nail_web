@@ -16,16 +16,21 @@ const tools: { id: Tool; name: string; icon: string; hint: string }[] = [
   { id: 'select', name: '选择 / 移动', icon: '↖', hint: '选择图层拖动画布中的选中饰品' },
   { id: 'shape', name: '甲型', icon: '◇', hint: '选择甲型和长度' },
   { id: 'base', name: '底胶', icon: '◐', hint: '给当前指甲设置底胶' },
-  { id: 'french', name: '法式', icon: '⌒', hint: '添加可调节的微笑线' },
-  { id: 'dots', name: '波点', icon: '⠿', hint: '点击或拖动绘制波点' },
-  { id: 'eraser', name: '橡皮擦', icon: '⌫', hint: '擦除选中图层，保留底胶' },
-  { id: 'sticker2d', name: '2D 饰品', icon: '✦', hint: '添加贝壳饰品贴图' },
-  { id: 'sticker3d', name: '立体饰品素材', icon: '⬡', hint: '使用金属饰品图片作为贴图' },
+  // { id: 'french', name: '法式', icon: '⌒', hint: '添加可调节的微笑线' },
+  // { id: 'dots', name: '波点', icon: '⠿', hint: '点击或拖动绘制波点' },
+  // { id: 'eraser', name: '橡皮擦', icon: '⌫', hint: '擦除选中图层，保留底胶' },
+  // { id: 'sticker2d', name: '2D 饰品', icon: '✦', hint: '添加贝壳饰品贴图' },
+  { id: 'sticker3d', name: '饰品素材', icon: '⬡', hint: '使用金属饰品图片作为贴图' },
   { id: 'upload', name: '上传图片', icon: '↥', hint: '上传图片并添加可编辑图层' },
 ]
-const categoryNames: Record<string, string> = { base_coat_pink: '粉色胶', base_coat_purple: '紫色胶', base_coat_french: '法式胶', '3D_accessory_shell': '贝壳饰品', '3D_accessory_metal': '金属饰品' }
+const categoryNames: Record<string, string> = { base_coat_cateye: '猫眼胶', base_coat_pink: '粉色胶', base_coat_purple: '紫色胶', base_coat_french: '法式胶', '3D_accessory_shell': '贝壳饰品', '3D_accessory_metal': '金属饰品' }
 const assetName = (src: string) => {
   const category = src.split('/')[2]
+  if (category === 'base_coat_cateye') {
+    const mode = src.match(/cateye-([a-z]+)_/)?.[1]
+    const names: Record<string, string> = { wide: '宽光', side: '侧光', chase: '追光', gradient: '渐变', diagonal: '斜光', smile: '微笑线' }
+    return `猫眼 · ${names[mode || ''] || '实物'}`
+  }
   return `${categoryNames[category] || '素材'} ${src.match(/_(\d+)\./)?.[1] || ''}`
 }
 const nailName = (index: number) => `${index < 5 ? '左手' : '右手'} · ${fingers[index % 5]}`
@@ -174,7 +179,7 @@ export default function App() {
     const entry = newLayer('dots', '手绘波点'); entry.color = dotsLayer?.color || color; entry.size = dotsLayer?.size || brush
     replaceExclusiveLayer(entry)
   }
-  const assetCategories = tool === 'base' ? ['base_coat_pink','base_coat_purple'] : tool === 'french' ? ['base_coat_french'] : tool === 'sticker2d' ? ['3D_accessory_shell'] : tool === 'sticker3d' ? ['3D_accessory_metal'] : []
+  const assetCategories = tool === 'base' ? ['base_coat_pink','base_coat_purple','base_coat_cateye'] : tool === 'french' ? ['base_coat_french'] : tool === 'sticker2d' ? ['3D_accessory_shell'] : tool === 'sticker3d' ? ['3D_accessory_metal'] : []
   const visibleAssets = assets.filter(asset => assetCategories.includes(asset.category) && (filter === 'all' || asset.category === filter) && assetName(asset.src).includes(search))
   const hasAssets = assetCategories.length > 0
 

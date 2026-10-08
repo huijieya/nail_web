@@ -1,5 +1,29 @@
 [
   {
+    "src": "/material/base_coat_cateye/cateye-wide_001.webp",
+    "category": "base_coat_cateye"
+  },
+  {
+    "src": "/material/base_coat_cateye/cateye-side_002.webp",
+    "category": "base_coat_cateye"
+  },
+  {
+    "src": "/material/base_coat_cateye/cateye-chase_003.webp",
+    "category": "base_coat_cateye"
+  },
+  {
+    "src": "/material/base_coat_cateye/cateye-gradient_004.webp",
+    "category": "base_coat_cateye"
+  },
+  {
+    "src": "/material/base_coat_cateye/cateye-diagonal_005.webp",
+    "category": "base_coat_cateye"
+  },
+  {
+    "src": "/material/base_coat_cateye/cateye-smile_006.webp",
+    "category": "base_coat_cateye"
+  },
+  {
     "src": "/material/3D_accessory_metal/DM_20260916220434_017.WEBP",
     "category": "3D_accessory_metal"
   },
