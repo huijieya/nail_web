@@ -4,7 +4,7 @@ import EditorCanvas from './EditorCanvas'
 import ReliefViewer from "./ReliefViewer";
 import type { Tool } from './EditorCanvas'
 import { availableLengths, fingers, shapes } from './model'
-import { loadImage, newLayer, parseProject, renderDesign } from './design'
+import { createLayerId, loadImage, newLayer, parseProject, renderDesign } from './design'
 import type { Layer, NailDesign } from './design'
 import { useCanvases, useModels, useProject, useSurfaces } from './useEditor'
 import assets from './assets.json'
@@ -292,7 +292,7 @@ export default function App() {
           <div className="layer-heading"><h3>图层</h3><span>{nailName(selected)}</span></div>
           <div className="layer-list">{[...nail.layers].reverse().map(entry => <div key={entry.id} className={`layer-row ${entry.id === layerId ? 'active' : ''}`}><button title={entry.visible ? '隐藏图层' : '显示图层'} onClick={() => editNail(previous => ({ ...previous, layers: previous.layers.map(candidate => candidate.id === entry.id ? { ...candidate, visible: !candidate.visible } : candidate) }))}>{entry.visible ? '◉' : '○'}</button><button onClick={() => setLayerId(entry.id)} title={entry.name}>{entry.name}</button></div>)}</div>
           <div className="base-layer">◐ 底胶 <span>固定底层</span></div>
-          {layer && <><div className="layer-actions"><button onClick={() => moveLayer(1)}>上移</button><button onClick={() => moveLayer(-1)}>下移</button><button onClick={() => { const copy = structuredClone(layer); copy.id = crypto.randomUUID(); copy.name += ' 副本'; addLayer(copy) }}>复制</button><button className="danger" onClick={removeLayer}>删除</button></div>
+          {layer && <><div className="layer-actions"><button onClick={() => moveLayer(1)}>上移</button><button onClick={() => moveLayer(-1)}>下移</button><button onClick={() => { const copy = structuredClone(layer); copy.id = createLayerId(); copy.name += ' 副本'; addLayer(copy) }}>复制</button><button className="danger" onClick={removeLayer}>删除</button></div>
             {layer.kind === 'image' && <><Range label="水平位置" value={layer.x} min={-.5} max={1.5} step={.01} onChange={value => patchLayer({ x: value })}/><Range label="垂直位置" value={layer.y} min={-.5} max={1.5} step={.01} onChange={value => patchLayer({ y: value })}/><Range label="尺寸 / 甲宽" value={layer.scale} min={.05} max={2} step={.01} onChange={value => patchLayer({ scale: value })}/><Range label="旋转" value={layer.rotation} min={-180} max={180} step={1} onChange={value => patchLayer({ rotation: value })} suffix="°"/></>}
             {layer.kind === 'accessory' && <><ColorControl label="附件颜色" value={layer.color} onChange={value => patchLayer({ color: value })}/><Range label="水平位置" value={layer.x} min={0} max={1} step={.01} onChange={value => moveAccessory({ x: value })}/><Range label="垂直位置" value={layer.y} min={0} max={1} step={.01} onChange={value => moveAccessory({ y: value })}/><Range label="尺寸 / 甲宽" value={layer.scale} min={.05} max={1} step={.01} onChange={value => patchLayer({ scale: value })}/><Range label="旋转" value={layer.rotation} min={-180} max={180} step={1} onChange={value => patchLayer({ rotation: value })} suffix="°"/></>}
           </>}

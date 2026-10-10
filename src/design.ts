@@ -15,7 +15,15 @@ export type NailDesign = { base: string; color: string; layers: Layer[] }
 export type Project = { version: 1; name: string; shape: string; length: string; nails: NailDesign[] }
 export const storageKey = 'nail-studio-project-v1'
 export const newProject = (): Project => ({ version: 1, name: '未命名设计', shape: '杏仁形', length: '中长', nails: Array.from({ length: 10 }, () => ({ base: '', color: '#cd9caa', layers: [] })) })
-export const newLayer = (kind: Layer['kind'], name: string): Layer => ({ id: crypto.randomUUID(), kind, name, visible: true, color: '#fff5ed', size: .04, points: [], src: '', x: .5, y: .5, scale: .45, rotation: 0, depth: .22, curve: .15, erasures: [] })
+export function createLayerId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+export const newLayer = (kind: Layer['kind'], name: string): Layer => ({ id: createLayerId(), kind, name, visible: true, color: '#fff5ed', size: .04, points: [], src: '', x: .5, y: .5, scale: .45, rotation: 0, depth: .22, curve: .15, erasures: [] })
 
 export function parseProject(raw: string): Project {
   const value = JSON.parse(raw) as Project
