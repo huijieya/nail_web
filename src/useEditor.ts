@@ -3,6 +3,7 @@ import type { NailModel, NailSurface } from './model'
 import { loadModels, loadSurfaces } from './model'
 import { newProject, parseProject, renderDesign, storageKey } from './design'
 import type { NailDesign, Project } from './design'
+import { compositeAccessories } from './accessories'
 
 type History = { past: Project[]; present: Project; future: Project[]; warning: string }
 type Action = { type: 'edit'; update: (project: Project) => Project } | { type: 'undo' | 'redo' }
@@ -93,8 +94,9 @@ export function useModels(shape: string, length: string, enabled: boolean) {
 }
 
 export function useCanvases(nails: NailDesign[], models: Array<NailSurface | undefined>) {
-  const cache = useMemo(() => new WeakMap<NailSurface, WeakMap<NailDesign, Promise<HTMLCanvasElement>>>(), [])
-  const [result, setResult] = useState<{ models: Array<NailSurface | undefined>; canvases: Array<HTMLCanvasElement | undefined> }>({ models: [], canvases: [] })
+  type Rendered = { canvas: HTMLCanvasElement; texture: HTMLCanvasElement }
+  const cache = useMemo(() => new WeakMap<NailSurface, WeakMap<NailDesign, Promise<Rendered>>>(), [])
+  const [result, setResult] = useState<{ models: Array<NailSurface | undefined>; rendered: Array<Rendered | undefined> }>({ models: [], rendered: [] })
   const [error, setError] = useState('')
   const revision = useRef(0)
   useEffect(() => {
@@ -107,11 +109,11 @@ export function useCanvases(nails: NailDesign[], models: Array<NailSurface | und
       let designs = cache.get(model)
       if (!designs) { designs = new WeakMap(); cache.set(model, designs) }
       let pending = designs.get(design)
-      if (!pending) { pending = renderDesign(design, model.mask); designs.set(design, pending); pending.catch(() => designs.delete(design)) }
+      if (!pending) { pending = renderDesign(design, model.mask, false).then(async texture => ({ texture, canvas: await compositeAccessories(texture, model.mask, design.layers) })); designs.set(design, pending); pending.catch(() => designs.delete(design)) }
       return pending
-    })).then(canvases => { if (current === revision.current) setResult({ models, canvases }) })
+    })).then(rendered => { if (current === revision.current) setResult({ models, rendered }) })
       .catch(reason => { if (current === revision.current) setError(reason instanceof Error ? reason.message : '画稿渲染失败') })
     return () => { revision.current += 1 }
   }, [nails, models, cache])
-  return { canvases: result.models === models ? result.canvases : [], error }
+  return useMemo(() => ({ canvases: result.models === models ? result.rendered.map(entry => entry?.canvas) : [], textures: result.models === models ? result.rendered.map(entry => entry?.texture) : [], error }), [result, models, error])
 }

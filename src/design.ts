@@ -1,10 +1,12 @@
 import { availableLengths, shapes } from './model'
 import { materialCrop } from './materials'
+import { compositeAccessories } from './accessories'
+import { isAccessorySource } from './accessoryCatalog'
 
 export type Point = { x: number; y: number }
 export type Stroke = { points: Point[]; size: number }
 export type Layer = {
-  id: string; name: string; kind: 'dots' | 'image' | 'french'; visible: boolean
+  id: string; name: string; kind: 'dots' | 'image' | 'french' | 'accessory'; visible: boolean
   color: string; size: number; points: Point[]; src: string
   x: number; y: number; scale: number; rotation: number; depth: number; curve: number
   erasures: Stroke[]
@@ -26,7 +28,7 @@ export function parseProject(raw: string): Project {
     if (!nail || !validSource(nail.base) || !color(nail.color) || !Array.isArray(nail.layers) || nail.layers.length > 200) throw new Error('画稿数据无效')
     const ids = new Set<string>()
     for (const layer of nail.layers) {
-      if (!layer || typeof layer.id !== 'string' || ids.has(layer.id) || typeof layer.name !== 'string' || typeof layer.visible !== 'boolean' || !['dots','image','french'].includes(layer.kind) || !validSource(layer.src) || !color(layer.color) || !number(layer.size, .001, 1) || !number(layer.x, -2, 3) || !number(layer.y, -2, 3) || !number(layer.scale, .01, 3) || !number(layer.rotation, -360, 360) || !number(layer.depth, 0, 1) || !number(layer.curve, 0, 1) || !Array.isArray(layer.points) || layer.points.length > 20000 || !layer.points.every(point) || !Array.isArray(layer.erasures) || layer.erasures.length > 2000 || !layer.erasures.every(stroke => stroke && number(stroke.size, .001, 1) && Array.isArray(stroke.points) && stroke.points.length <= 20000 && stroke.points.every(point))) throw new Error('图层数据无效')
+      if (!layer || typeof layer.id !== 'string' || ids.has(layer.id) || typeof layer.name !== 'string' || typeof layer.visible !== 'boolean' || !['dots','image','french','accessory'].includes(layer.kind) || !(layer.kind === 'accessory' ? isAccessorySource(layer.src) : validSource(layer.src)) || !color(layer.color) || !number(layer.size, .001, 1) || !number(layer.x, -2, 3) || !number(layer.y, -2, 3) || !number(layer.scale, .01, 3) || !number(layer.rotation, -360, 360) || !number(layer.depth, 0, 1) || !number(layer.curve, 0, 1) || !Array.isArray(layer.points) || layer.points.length > 20000 || !layer.points.every(point) || !Array.isArray(layer.erasures) || layer.erasures.length > 2000 || !layer.erasures.every(stroke => stroke && number(stroke.size, .001, 1) && Array.isArray(stroke.points) && stroke.points.length <= 20000 && stroke.points.every(point))) throw new Error('图层数据无效')
       ids.add(layer.id)
     }
   }
@@ -61,8 +63,8 @@ function makeCanvas(width: number, height: number) {
   return canvas
 }
 
-export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement) {
-  const sources = [design.base, ...design.layers.filter(layer => layer.visible).map(layer => layer.src)].filter(Boolean)
+export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement, includeAccessories = true) {
+  const sources = [design.base, ...design.layers.filter(layer => layer.visible && layer.kind !== 'accessory').map(layer => layer.src)].filter(Boolean)
   const loaded = new Map(await Promise.all([...new Set(sources)].map(async src => [src, await loadImage(src)] as const)))
   const width = mask.width, height = mask.height
   const canvas = makeCanvas(width, height)
@@ -76,7 +78,7 @@ export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement) 
     context.drawImage(image, image.naturalWidth * crop.x, image.naturalHeight * crop.y, image.naturalWidth * crop.width, image.naturalHeight * crop.height, 0, 0, width, height)
   }
   for (const layer of design.layers) {
-    if (!layer.visible) continue
+    if (!layer.visible || layer.kind === 'accessory') continue
     const surface = makeCanvas(width, height)
     const painter = surface.getContext('2d')!
     painter.fillStyle = layer.color
@@ -109,5 +111,5 @@ export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement) 
   context.globalCompositeOperation = 'destination-in'
   context.drawImage(mask, 0, 0)
   context.globalCompositeOperation = 'source-over'
-  return canvas
+  return includeAccessories ? compositeAccessories(canvas, mask, design.layers) : canvas
 }

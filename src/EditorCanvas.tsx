@@ -3,8 +3,9 @@ import type { PointerEvent } from 'react'
 import type { NailSurface } from './model'
 import type { NailDesign, Layer, Point } from './design'
 import { newLayer } from './design'
+import { accessoryPosition } from './accessories'
 
-export type Tool = 'select' | 'shape' | 'base' | 'french' | 'dots' | 'eraser' | 'sticker2d' | 'sticker3d' | 'upload'
+export type Tool = 'select' | 'shape' | 'base' | 'french' | 'dots' | 'eraser' | 'sticker2d' | 'sticker3d' | 'accessory' | 'upload'
 type Props = {
   model: NailSurface; canvas?: HTMLCanvasElement; design: NailDesign; tool: Tool; layerId: string
   color: string; brush: number; spacing: number; zoom: number
@@ -40,10 +41,10 @@ export default function EditorCanvas(props: Props) {
       }
       layer.points.push(point)
     } else if (tool === 'eraser') {
-      if (!layer?.visible) return
+      if (!layer?.visible || layer.kind === 'accessory') return
       layer.erasures.push({ size: brush, points: [point] })
-    } else if (['select','sticker2d','sticker3d','upload'].includes(tool)) {
-      if (!layer || layer.kind !== 'image' || !layer.visible) return
+    } else if (['select','sticker2d','sticker3d','accessory','upload'].includes(tool)) {
+      if (!layer || !['image', 'accessory'].includes(layer.kind) || !layer.visible) return
     } else return
     gesture.current = { original: design, draft, layer, start: point, last: point }
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -69,6 +70,7 @@ export default function EditorCanvas(props: Props) {
       const original = active.original.layers.find(layer => layer.id === active.layer.id)!
       active.layer.x = Math.max(-1, Math.min(2, original.x + point.x - active.start.x))
       active.layer.y = Math.max(-1, Math.min(2, original.y + point.y - active.start.y))
+      if (active.layer.kind === 'accessory') Object.assign(active.layer, accessoryPosition(model.mask, active.layer))
     }
     onPreview(structuredClone(active.draft))
   }
@@ -80,10 +82,11 @@ export default function EditorCanvas(props: Props) {
     if (cancel) onCancel(); else onCommit(structuredClone(active.draft))
   }
   const selected = design.layers.find(layer => layer.id === layerId)
+  const anchor = selected?.kind === 'accessory' ? accessoryPosition(model.mask, selected) : selected
   return <div className="drawing-area">
     <div className="drawing-surface" style={{ height: `${Math.min(440, 270 * heightRatio) * zoom / 100}px`, aspectRatio: `${model.width} / ${model.height}` }}>
       <canvas aria-label="指甲编辑画布" ref={canvasRef} onPointerDown={begin} onPointerMove={move} onPointerUp={event => finish(event)} onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => { if (gesture.current) finish(event, true) }} style={{ cursor: tool === 'dots' || tool === 'eraser' ? 'crosshair' : 'move' }}/>
-      {selected?.kind === 'image' && selected.visible && <div className="image-anchor" style={{ left: `${selected.x * 100}%`, top: `${selected.y * 100}%` }}>＋</div>}
+      {selected && anchor && ['image', 'accessory'].includes(selected.kind) && selected.visible && <div className="image-anchor" style={{ left: `${anchor.x * 100}%`, top: `${anchor.y * 100}%` }}>＋</div>}
     </div>
   </div>
 }

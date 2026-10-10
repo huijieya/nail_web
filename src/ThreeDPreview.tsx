@@ -2,14 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { NailModel } from './model'
+import type { NailDesign } from './design'
+import { loadAccessory } from './accessories'
+import { placeAccessory } from './accessoryPlacement'
 
-type Props = { models: Array<NailModel | undefined>; canvases: Array<HTMLCanvasElement | undefined>; selected: number; onSelect: (index: number) => void }
+type Props = { models: Array<NailModel | undefined>; canvases: Array<HTMLCanvasElement | undefined>; nails: NailDesign[]; selected: number; onSelect: (index: number) => void }
 
-export default function ThreeDPreview({ models, canvases, selected, onSelect }: Props) {
+export default function ThreeDPreview({ models, canvases, nails, selected, onSelect }: Props) {
   const mountRef = useRef<HTMLDivElement>(null)
   const materials = useRef<THREE.MeshPhysicalMaterial[]>([])
   const reset = useRef<() => void>(() => {})
   const [error, setError] = useState('')
+  const [accessoryError, setAccessoryError] = useState('')
+  const [attempt, setAttempt] = useState(0)
+  const nailMeshes = useRef<THREE.Mesh[]>([])
 
   useEffect(() => {
     const mount = mountRef.current
@@ -37,6 +43,7 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
     const columnGap = maxWidth + 5, rowGap = maxHeight + 9
     const meshes: THREE.Mesh[] = []
     materials.current = []
+    nailMeshes.current = []
     for (let index = 0; index < 10; index += 1) {
       const finger = index % 5
       const model = models[finger]
@@ -46,6 +53,7 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
       mesh.position.set((index % 5 - 2) * columnGap, index < 5 ? rowGap / 2 : -rowGap / 2, 0)
       mesh.userData.nail = index
       scene.add(mesh); meshes.push(mesh); materials.current[index] = material
+      nailMeshes.current[index] = mesh
     }
     const resize = () => {
       const width = mount.clientWidth || 600, height = mount.clientHeight || 500
@@ -72,7 +80,7 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
       if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 5) return
       const rect = renderer.domElement.getBoundingClientRect()
       raycaster.setFromCamera(new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, 1 - (event.clientY - rect.top) / rect.height * 2), camera)
-      const hit = raycaster.intersectObjects(meshes)[0]
+      const hit = raycaster.intersectObjects(meshes, true)[0]
       if (hit) onSelect(hit.object.userData.nail as number)
     }
     renderer.domElement.addEventListener('pointerdown', down)
@@ -86,9 +94,31 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
       renderer.domElement.removeEventListener('dblclick', fit)
       materials.current.forEach(material => { material.map?.dispose(); material.dispose() })
       materials.current = []
+      nailMeshes.current = []
       renderer.dispose(); renderer.domElement.remove()
     }
   }, [models, onSelect])
+
+  useEffect(() => {
+    let active = true
+    const attached: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhysicalMaterial>[] = []
+    setAccessoryError('')
+    nails.forEach((design, index) => {
+      const nail = nailMeshes.current[index], model = models[index % 5]
+      if (!nail || !model) return
+      design.layers.filter(layer => layer.kind === 'accessory' && layer.visible).forEach(layer => {
+        loadAccessory(layer.src).then(({ geometry }) => {
+          if (!active) return
+          const material = new THREE.MeshPhysicalMaterial({ color: layer.color, roughness: .32, clearcoat: .5, side: THREE.DoubleSide })
+          const mesh = new THREE.Mesh(geometry, material)
+          mesh.userData.nail = index
+          placeAccessory(mesh, nail, model, layer)
+          nail.add(mesh); attached.push(mesh)
+        }).catch(() => { if (active) setAccessoryError('3D 附件加载失败') })
+      })
+    })
+    return () => { active = false; attached.forEach(mesh => { mesh.removeFromParent(); mesh.material.dispose() }) }
+  }, [nails, models, attempt])
 
   useEffect(() => {
     materials.current.forEach((material, index) => {
@@ -103,6 +133,5 @@ export default function ThreeDPreview({ models, canvases, selected, onSelect }: 
     materials.current.forEach((material, index) => { material.emissive.set(index === selected ? '#171321' : '#000000') })
   }, [selected, models])
 
-  const count = models.filter(Boolean).length
-  return <div className="model-view"><div className="three-mount" ref={mountRef}/>{error && <div role="alert" className="model-error">{error}</div>}<button className="view-reset" onClick={() => reset.current()}>重置视角</button><span className="view-help">拖动旋转 · 滚轮缩放 · 点击选择指甲</span></div>
+  return <div className="model-view"><div className="three-mount" ref={mountRef}/>{error && <div role="alert" className="model-error">{error}</div>}{accessoryError && <div role="alert" className="model-error">{accessoryError}<button onClick={() => setAttempt(value => value + 1)}>重试加载附件</button></div>}<button className="view-reset" onClick={() => reset.current()}>重置视角</button><span className="view-help">拖动旋转 · 滚轮缩放 · 点击选择指甲</span></div>
 }

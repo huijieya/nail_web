@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import EditorCanvas from './EditorCanvas'
+import ReliefViewer from "./ReliefViewer";
 import type { Tool } from './EditorCanvas'
 import { availableLengths, fingers, shapes } from './model'
 import { loadImage, newLayer, parseProject, renderDesign } from './design'
@@ -8,6 +9,8 @@ import type { Layer, NailDesign } from './design'
 import { useCanvases, useModels, useProject, useSurfaces } from './useEditor'
 import assets from './assets.json'
 import { materialCrop } from './materials'
+import AccessoryLibrary from './AccessoryLibrary'
+import { accessoryPosition } from './accessories'
 import './editor.css'
 
 const ThreeDPreview = lazy(() => import('./ThreeDPreview'))
@@ -21,6 +24,7 @@ const tools: { id: Tool; name: string; icon: string; hint: string }[] = [
   { id: 'eraser', name: '橡皮擦', icon: '⌫', hint: '擦除选中图层，保留底胶' },
   // { id: 'sticker2d', name: '2D 饰品', icon: '✦', hint: '添加贝壳饰品贴图' },
   { id: 'sticker3d', name: '饰品素材', icon: '⬡', hint: '使用金属饰品图片作为贴图' },
+  { id: 'accessory', name: '3D 附件', icon: '✧', hint: '' },
   { id: 'upload', name: '上传图片', icon: '↥', hint: '上传图片并添加可编辑图层' },
 ]
 const categoryNames: Record<string, string> = { base_coat_cateye: '猫眼胶', base_coat_pink: '粉色胶', base_coat_purple: '紫色胶', base_coat_french: '法式胶', '3D_accessory_shell': '贝壳饰品', '3D_accessory_metal': '金属饰品' }
@@ -43,6 +47,7 @@ const download = (blob: Blob, name: string) => {
 
 export default function App() {
   const { project, commit, undo, redo, canUndo, canRedo, saveStatus } = useProject()
+  const [page, setPage] = useState<'editor' | 'relief'>('relief')
   const [tool, setTool] = useState<Tool>('shape')
   const [view, setView] = useState<'2D' | '3D'>('2D')
   const [selected, setSelected] = useState(2)
@@ -61,7 +66,7 @@ export default function App() {
   const { surfaces, error: surfaceError, retry: retrySurfaces } = useSurfaces(project.shape, project.length)
   const { models, loaded, error: modelError, retry } = useModels(project.shape, project.length, view === '3D')
   const nails = useMemo(() => project.nails.map((nail, index) => index === selected && draft ? draft : nail), [project.nails, selected, draft])
-  const { canvases, error: renderError } = useCanvases(nails, surfaces)
+  const { canvases, textures, error: renderError } = useCanvases(nails, surfaces)
   const nail = nails[selected]
   const layer = nail.layers.find(candidate => candidate.id === layerId)
   const frenchLayer = nail.layers.find(candidate => candidate.kind === 'french')
@@ -115,6 +120,8 @@ export default function App() {
   const addImage = (src: string, name: string) => {
     const entry = newLayer('image', name); entry.src = src; addLayer(entry)
   }
+  const addAccessory = (src: string, name: string) => { const entry = newLayer('accessory', `3D · ${name}`); entry.src = src; addLayer(entry) }
+  const moveAccessory = (patch: Partial<Layer>) => { if (layer && currentModel) patchLayer(accessoryPosition(currentModel.mask, { ...layer, ...patch })) }
   const selectTool = (next: Tool) => { setDraft(null); setTool(next); setSearch(''); setFilter('all') }
 
   useEffect(() => {
@@ -182,12 +189,29 @@ export default function App() {
   const assetCategories = tool === 'base' ? ['base_coat_pink','base_coat_purple','base_coat_cateye'] : tool === 'french' ? ['base_coat_french'] : tool === 'sticker2d' ? ['3D_accessory_shell'] : tool === 'sticker3d' ? ['3D_accessory_metal'] : []
   const visibleAssets = assets.filter(asset => assetCategories.includes(asset.category) && (filter === 'all' || asset.category === filter) && assetName(asset.src).includes(search))
   const hasAssets = assetCategories.length > 0
-
+  if(page === 'relief') {
+    return (
+      <main className="app-shell editor-shell">
+        <header className="topbar">
+          <div className="brand-block">
+            <div className="brand-name">浮雕生成</div>
+          </div>
+          <div className="top-actions">
+            <button className="ghost-button" onClick={() => setPage('editor')}>返回编辑器</button>
+          </div>
+        </header>
+        <div style={{padding: 20, overflow: 'auto'}}>
+          <ReliefViewer/>
+        </div>
+      </main>
+    )
+  }
   return <main className="app-shell editor-shell">
     <header className="topbar">
       <div className="brand-block"><div><div className="brand-name">3D<span>渲染</span></div></div></div>
       <input className="project-name" aria-label="项目名称" maxLength={100} value={project.name} onChange={event => commit(previous => ({ ...previous, name: event.target.value }))}/>
       <div className="top-actions">
+        <button className="ghost-button" onClick={() => setPage('relief')}>浮雕生成</button>
         <button className="ghost-button" disabled={!canUndo || !!draft} onClick={() => { setDraft(null); undo() }} title="⌘/Ctrl Z">↶ 撤销</button>
         <button className="ghost-button" disabled={!canRedo || !!draft} onClick={() => { setDraft(null); redo() }} title="⌘/Ctrl Shift Z">↷ 重做</button>
         <button className="ghost-button" disabled={!!draft} onClick={clearDesign} title="清空全部图层，保留甲型和长度，可撤销">清空</button>
@@ -213,7 +237,7 @@ export default function App() {
         </div>
         <div className="editor-stage">
           {view === '3D' ? <>
-            {models.some(Boolean) ? <Suspense fallback={<div className="loading-state" role="status">正在启动 3D 预览…</div>}><ThreeDPreview models={models} canvases={canvases} selected={selected} onSelect={selectNail}/></Suspense> : <div className="loading-state" role="status">{modelError || `正在加载 3D 模型… ${loaded} / 5`}</div>}
+            {models.some(Boolean) ? <Suspense fallback={<div className="loading-state" role="status">正在启动 3D 预览…</div>}><ThreeDPreview models={models} canvases={textures} nails={nails} selected={selected} onSelect={selectNail}/></Suspense> : <div className="loading-state" role="status">{modelError || `正在加载 3D 模型… ${loaded} / 5`}</div>}
             {modelError && <div role="alert">{modelError}<button onClick={retry}>重试加载</button></div>}
           </> : currentModel ? <EditorCanvas key={`${project.shape}-${project.length}-${selected}-${tool}`} model={currentModel} canvas={canvases[selected]} design={nail} tool={tool} layerId={layerId} color={color} brush={brush} spacing={spacing} zoom={zoom} onSelectLayer={setLayerId} onPreview={setDraft} onCommit={next => editNail(() => next)} onCancel={() => setDraft(null)}/> : <div className="loading-state" role="status">{surfaceError || '正在加载轮廓…'}{surfaceError && <button onClick={retrySurfaces}>重试加载</button>}</div>}
         </div>
@@ -241,10 +265,11 @@ export default function App() {
           <button className="panel-button secondary" onClick={addHandDots}>清空并新建手绘波点层</button>
           <p className="small-note">手绘波点：点击落点或拖动连续绘制，每次笔画可独立撤销。</p>
         </>}
-        {tool === 'eraser' && <><Range label="橡皮擦直径" value={brush} min={.02} max={.5} step={.01} onChange={setBrush}/><p className="small-note">{layer ? `正在擦除「${layer.name}」` : '请先在下方选择一个图层'}。擦除后露出下面的图层，底胶保留。</p></>}
+        {tool === 'eraser' && <><Range label="橡皮擦直径" value={brush} min={.02} max={.5} step={.01} onChange={setBrush}/><p className="small-note">{layer?.kind === 'accessory' ? '3D 附件请使用隐藏或删除，橡皮擦仅用于平面图层。' : `${layer ? `正在擦除「${layer.name}」` : '请先在下方选择一个图层'}。擦除后露出下面的图层，底胶保留。`}</p></>}
         {tool === 'upload' && <label className="dropzone"><input type="file" accept="image/png,image/jpeg,image/webp" onChange={onUpload}/><span className="upload-icon">↥</span><strong>选择本地图片</strong><small>PNG / JPG / WEBP · 最大 12 MB</small></label>}
         {tool === 'select' && <p className="small-note">选中图层后，可移动该图层的饰品，也可进行上移、下移等操作。</p>}
         {tool === 'sticker3d' && <p className="small-note">当前素材库提供饰品图片，以贴图叠加到曲面；不含饰品实体模型。</p>}
+        {tool === 'accessory' && <AccessoryLibrary onAdd={addAccessory}/>}
         {hasAssets && <div className="material-library">
           <input className="asset-search" placeholder="搜索素材名称或编号" aria-label="搜索素材" value={search} onChange={event => setSearch(event.target.value)}/>
           {assetCategories.length > 1 && <div className="panel-tabs">{['all', ...assetCategories].map(category => <button key={category} className={filter === category ? 'active' : ''} onClick={() => setFilter(category)}>{category === 'all' ? '全部' : categoryNames[category]}</button>)}</div>}
@@ -269,6 +294,7 @@ export default function App() {
           <div className="base-layer">◐ 底胶 <span>固定底层</span></div>
           {layer && <><div className="layer-actions"><button onClick={() => moveLayer(1)}>上移</button><button onClick={() => moveLayer(-1)}>下移</button><button onClick={() => { const copy = structuredClone(layer); copy.id = crypto.randomUUID(); copy.name += ' 副本'; addLayer(copy) }}>复制</button><button className="danger" onClick={removeLayer}>删除</button></div>
             {layer.kind === 'image' && <><Range label="水平位置" value={layer.x} min={-.5} max={1.5} step={.01} onChange={value => patchLayer({ x: value })}/><Range label="垂直位置" value={layer.y} min={-.5} max={1.5} step={.01} onChange={value => patchLayer({ y: value })}/><Range label="尺寸 / 甲宽" value={layer.scale} min={.05} max={2} step={.01} onChange={value => patchLayer({ scale: value })}/><Range label="旋转" value={layer.rotation} min={-180} max={180} step={1} onChange={value => patchLayer({ rotation: value })} suffix="°"/></>}
+            {layer.kind === 'accessory' && <><ColorControl label="附件颜色" value={layer.color} onChange={value => patchLayer({ color: value })}/><Range label="水平位置" value={layer.x} min={0} max={1} step={.01} onChange={value => moveAccessory({ x: value })}/><Range label="垂直位置" value={layer.y} min={0} max={1} step={.01} onChange={value => moveAccessory({ y: value })}/><Range label="尺寸 / 甲宽" value={layer.scale} min={.05} max={1} step={.01} onChange={value => patchLayer({ scale: value })}/><Range label="旋转" value={layer.rotation} min={-180} max={180} step={1} onChange={value => patchLayer({ rotation: value })} suffix="°"/></>}
           </>}
           <button className="panel-button secondary" onClick={() => { commit(previous => ({ ...previous, nails: previous.nails.map(() => structuredClone(previous.nails[selected])) })); setNotice('已将当前画稿复制到十指，可撤销') }}>当前画稿复制到十指</button>
         </section>

@@ -45,6 +45,13 @@
 .color-control input { width: 30px; height: 26px; border: none; padding: 0; background: none; cursor: pointer; }
 .color-control small { color: #a8a8a8; font-size: 10px; }
 .material-library { margin-top: 16px; }
+.accessory-model-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+.accessory-model-card { padding: 9px; border: 1px solid #525665; border-radius: 6px; background: #2d2e34; text-align: center; }
+.accessory-model-card:hover { border-color: #a3acd3; background: #3b3f51; }
+.accessory-model-image { display: grid; place-items: center; height: 90px; color: #bbb; font-size: 10px; }
+.accessory-model-image img { width: 100%; height: 82px; object-fit: contain; }
+.accessory-model-card strong, .accessory-model-card small { display: block; margin-top: 6px; font-size: 11px; }
+.accessory-model-card small { color: #b6c0e8; font-size: 10px; }
 .asset-search { width: 100%; padding: 8px; border-radius: 4px; background: #202020; border: 1px solid #4a4a4a; margin-bottom: 10px; font-size: 11px; }
 .editor-shell .asset-grid { max-height: 260px; overflow-y: auto; padding: 3px; grid-template-columns: repeat(4, 1fr); }
 .editor-shell .asset-image { height: 56px; background: #292929; }
