@@ -12,6 +12,7 @@ export type Layer = {
   erasures: Stroke[]
 }
 export type NailDesign = { base: string; color: string; layers: Layer[] }
+export const isErasableLayer = (layer: Layer) => layer.kind === 'french' || layer.kind === 'dots'
 export type Project = { version: 1; name: string; shape: string; length: string; nails: NailDesign[] }
 export const storageKey = 'nail-studio-project-v1'
 export const newProject = (): Project => ({ version: 1, name: '未命名设计', shape: '杏仁形', length: '中长', nails: Array.from({ length: 10 }, () => ({ base: '', color: '#cd9caa', layers: [] })) })
@@ -98,21 +99,29 @@ export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement, 
       painter.beginPath(); painter.moveTo(0, height * (1 - layer.depth - layer.curve))
       painter.quadraticCurveTo(width / 2, height * (1 - layer.depth + layer.curve), width, height * (1 - layer.depth - layer.curve))
       painter.lineTo(width, height); painter.lineTo(0, height); painter.closePath(); painter.fill()
-      if (layer.src) { painter.globalCompositeOperation = 'source-atop'; painter.drawImage(loaded.get(layer.src)!, 0, 0, width, height); painter.globalCompositeOperation = 'source-over' }
+      if (layer.src) {
+        const image = loaded.get(layer.src)!
+        const crop = materialCrop(layer.src)
+        painter.globalCompositeOperation = 'source-atop'
+        painter.drawImage(image, image.naturalWidth * crop.x, image.naturalHeight * crop.y, image.naturalWidth * crop.width, image.naturalHeight * crop.height, 0, 0, width, height)
+        painter.globalCompositeOperation = 'source-over'
+      }
     } else if (layer.src) {
       const image = loaded.get(layer.src)!
       const imageWidth = width * layer.scale, imageHeight = imageWidth * image.height / image.width
       painter.save(); painter.translate(layer.x * width, layer.y * height); painter.rotate(layer.rotation * Math.PI / 180)
       painter.drawImage(image, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight); painter.restore()
     }
-    painter.globalCompositeOperation = 'destination-out'
-    painter.lineCap = 'round'; painter.lineJoin = 'round'
-    for (const stroke of layer.erasures) {
-      painter.lineWidth = stroke.size * width
-      painter.beginPath()
-      stroke.points.forEach((point, index) => { if (index === 0) painter.moveTo(point.x * width, point.y * height); else painter.lineTo(point.x * width, point.y * height) })
-      painter.stroke()
-      if (stroke.points.length === 1) { painter.beginPath(); painter.arc(stroke.points[0].x * width, stroke.points[0].y * height, stroke.size * width / 2, 0, Math.PI * 2); painter.fill() }
+    if (isErasableLayer(layer)) {
+      painter.globalCompositeOperation = 'destination-out'
+      painter.lineCap = 'round'; painter.lineJoin = 'round'
+      for (const stroke of layer.erasures) {
+        painter.lineWidth = stroke.size * width
+        painter.beginPath()
+        stroke.points.forEach((point, index) => { if (index === 0) painter.moveTo(point.x * width, point.y * height); else painter.lineTo(point.x * width, point.y * height) })
+        painter.stroke()
+        if (stroke.points.length === 1) { painter.beginPath(); painter.arc(stroke.points[0].x * width, stroke.points[0].y * height, stroke.size * width / 2, 0, Math.PI * 2); painter.fill() }
+      }
     }
     context.drawImage(surface, 0, 0)
   }

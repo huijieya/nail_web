@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { PointerEvent } from 'react'
 import type { NailSurface } from './model'
 import type { NailDesign, Layer, Point } from './design'
-import { newLayer } from './design'
+import { isErasableLayer, newLayer } from './design'
 import { accessoryPosition } from './accessories'
 
 export type Tool = 'select' | 'shape' | 'base' | 'french' | 'dots' | 'eraser' | 'sticker2d' | 'sticker3d' | 'accessory' | 'upload'
@@ -41,7 +41,7 @@ export default function EditorCanvas(props: Props) {
       }
       layer.points.push(point)
     } else if (tool === 'eraser') {
-      if (!layer?.visible || layer.kind === 'accessory') return
+      if (!layer?.visible || !isErasableLayer(layer)) return
       layer.erasures.push({ size: brush, points: [point] })
     } else if (['select','sticker2d','sticker3d','accessory','upload'].includes(tool)) {
       if (!layer || !['image', 'accessory'].includes(layer.kind) || !layer.visible) return

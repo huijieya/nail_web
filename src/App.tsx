@@ -4,7 +4,7 @@ import EditorCanvas from './EditorCanvas'
 import ReliefViewer from "./ReliefViewer";
 import type { Tool } from './EditorCanvas'
 import { availableLengths, fingers, shapes } from './model'
-import { createLayerId, loadImage, newLayer, parseProject, renderDesign } from './design'
+import { createLayerId, isErasableLayer, loadImage, newLayer, parseProject, renderDesign } from './design'
 import type { Layer, NailDesign } from './design'
 import { useCanvases, useModels, useProject, useSurfaces } from './useEditor'
 import assets from './assets.json'
@@ -21,7 +21,7 @@ const tools: { id: Tool; name: string; icon: string; hint: string }[] = [
   { id: 'base', name: '底胶', icon: '◐', hint: '给当前指甲设置底胶' },
   { id: 'french', name: '法式', icon: '⌒', hint: '添加可调节的微笑线' },
   { id: 'dots', name: '波点', icon: '⠿', hint: '点击或拖动绘制波点' },
-  { id: 'eraser', name: '橡皮擦', icon: '⌫', hint: '擦除选中图层，保留底胶' },
+  { id: 'eraser', name: '橡皮擦', icon: '⌫', hint: '仅擦除选中的法式或波点图层' },
   // { id: 'sticker2d', name: '2D 饰品', icon: '✦', hint: '添加贝壳饰品贴图' },
   { id: 'sticker3d', name: '饰品素材', icon: '⬡', hint: '使用金属饰品图片作为贴图' },
   { id: 'accessory', name: '3D 附件', icon: '✧', hint: '' },
@@ -47,7 +47,7 @@ const download = (blob: Blob, name: string) => {
 
 export default function App() {
   const { project, commit, undo, redo, canUndo, canRedo, saveStatus } = useProject()
-  const [page, setPage] = useState<'editor' | 'relief'>('relief')
+  const [page, setPage] = useState<'editor' | 'relief'>('editor')
   const [tool, setTool] = useState<Tool>('shape')
   const [view, setView] = useState<'2D' | '3D'>('2D')
   const [selected, setSelected] = useState(2)
@@ -265,7 +265,7 @@ export default function App() {
           <button className="panel-button secondary" onClick={addHandDots}>清空并新建手绘波点层</button>
           <p className="small-note">手绘波点：点击落点或拖动连续绘制，每次笔画可独立撤销。</p>
         </>}
-        {tool === 'eraser' && <><Range label="橡皮擦直径" value={brush} min={.02} max={.5} step={.01} onChange={setBrush}/><p className="small-note">{layer?.kind === 'accessory' ? '3D 附件请使用隐藏或删除，橡皮擦仅用于平面图层。' : `${layer ? `正在擦除「${layer.name}」` : '请先在下方选择一个图层'}。擦除后露出下面的图层，底胶保留。`}</p></>}
+        {tool === 'eraser' && <><Range label="橡皮擦直径" value={brush} min={.02} max={.5} step={.01} onChange={setBrush}/><p className="small-note">{layer && isErasableLayer(layer) ? layer.visible ? `正在擦除「${layer.name}」。擦除后露出下面的图层，底胶保留。` : '请先显示选中的法式或波点图层，再进行擦除。' : '橡皮擦仅可擦除法式和波点，请在下方选择对应图层。饰品和上传图片请使用隐藏或删除。'}</p></>}
         {tool === 'upload' && <label className="dropzone"><input type="file" accept="image/png,image/jpeg,image/webp" onChange={onUpload}/><span className="upload-icon">↥</span><strong>选择本地图片</strong><small>PNG / JPG / WEBP · 最大 12 MB</small></label>}
         {tool === 'select' && <p className="small-note">选中图层后，可移动该图层的饰品，也可进行上移、下移等操作。</p>}
         {tool === 'sticker3d' && <p className="small-note">当前素材库提供饰品图片，以贴图叠加到曲面；不含饰品实体模型。</p>}

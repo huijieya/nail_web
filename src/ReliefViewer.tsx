@@ -403,10 +403,12 @@ export default function ReliefViewer() {
       return;
     }
 
+    const currentDepthUrl = depthUrl;
+    const currentColorUrl = colorUrl;
     let disposed = false;
 
     async function updateRelief() {
-      const depthImage = await loadImage(depthUrl);
+      const depthImage = await loadImage(currentDepthUrl);
 
       if (disposed || !sceneRef.current) {
         return;
@@ -425,8 +427,8 @@ export default function ReliefViewer() {
 
       let material: THREE.MeshStandardMaterial;
 
-      if (colorUrl && !clayMode) {
-        const colorImage = await loadImage(colorUrl);
+      if (currentColorUrl && !clayMode) {
+        const colorImage = await loadImage(currentColorUrl);
         const texture = new THREE.Texture(colorImage);
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.needsUpdate = true;
