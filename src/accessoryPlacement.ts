@@ -12,12 +12,17 @@ export function placeAccessory(mesh: THREE.Mesh, nail: THREE.Mesh, model: NailMo
   const origin = nail.localToWorld(new THREE.Vector3(horizontal, vertical, bounds.max.z + 10))
   const raycaster = new THREE.Raycaster(origin, new THREE.Vector3(0, 0, -1))
   const hit = raycaster.intersectObject(nail, false)[0]
-  if (!hit) { mesh.visible = false; return }
+  if (!hit) {
+    mesh.visible = false
+    return
+  }
   const normal = hit.normal?.clone() || hit.face?.normal.clone() || new THREE.Vector3(0, 0, 1)
   if (normal.z < 0) normal.negate()
   normal.normalize()
-  mesh.position.copy(nail.worldToLocal(hit.point.clone())).addScaledVector(normal, .025)
+  mesh.position.copy(nail.worldToLocal(hit.point.clone())).addScaledVector(normal, 0.025)
   mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal)
-  mesh.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -layer.rotation * Math.PI / 180))
+  mesh.quaternion.multiply(
+    new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), (-layer.rotation * Math.PI) / 180),
+  )
   mesh.scale.setScalar(model.width * layer.scale)
 }

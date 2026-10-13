@@ -17,30 +17,42 @@ export function prepareAccessoryGeometry(source: BufferGeometry, rotationX: numb
   if (positions.count > 120000) {
     const cell = Math.max(size.x, size.y, size.z) / size.x / 128
     const clusters = new Map<string, number>()
-    const sums: number[] = [], counts: number[] = []
+    const sums: number[] = [],
+      counts: number[] = []
     const remap = new Uint32Array(positions.count)
     for (let index = 0; index < positions.count; index += 1) {
-      const horizontal = positions.getX(index), vertical = positions.getY(index), height = positions.getZ(index)
+      const horizontal = positions.getX(index),
+        vertical = positions.getY(index),
+        height = positions.getZ(index)
       const key = `${Math.round(horizontal / cell)},${Math.round(vertical / cell)},${Math.round(height / cell)}`
       let target = clusters.get(key)
       if (target === undefined) {
         target = counts.length
-        clusters.set(key, target); sums.push(0, 0, 0); counts.push(0)
+        clusters.set(key, target)
+        sums.push(0, 0, 0)
+        counts.push(0)
       }
       remap[index] = target
-      sums[target * 3] += horizontal; sums[target * 3 + 1] += vertical; sums[target * 3 + 2] += height
+      sums[target * 3] += horizontal
+      sums[target * 3 + 1] += vertical
+      sums[target * 3 + 2] += height
       counts[target] += 1
     }
     const vertices = new Float32Array(sums.length)
-    sums.forEach((sum, index) => { vertices[index] = sum / counts[Math.floor(index / 3)] })
+    sums.forEach((sum, index) => {
+      vertices[index] = sum / counts[Math.floor(index / 3)]
+    })
     const indices: number[] = []
     const faces = new Set<string>()
     for (let index = 0; index < remap.length; index += 3) {
-      const first = remap[index], second = remap[index + 1], third = remap[index + 2]
+      const first = remap[index],
+        second = remap[index + 1],
+        third = remap[index + 2]
       if (first === second || second === third || third === first) continue
       const key = [first, second, third].sort((left, right) => left - right).join(',')
       if (faces.has(key)) continue
-      faces.add(key); indices.push(first, second, third)
+      faces.add(key)
+      indices.push(first, second, third)
     }
     geometry = new BufferGeometry()
     geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3))
@@ -50,7 +62,11 @@ export function prepareAccessoryGeometry(source: BufferGeometry, rotationX: numb
   geometry.computeBoundingBox()
   const normalized = geometry.boundingBox!
   const width = normalized.max.x - normalized.min.x
-  geometry.translate(-(normalized.min.x + normalized.max.x) / 2, -(normalized.min.y + normalized.max.y) / 2, -normalized.min.z)
+  geometry.translate(
+    -(normalized.min.x + normalized.max.x) / 2,
+    -(normalized.min.y + normalized.max.y) / 2,
+    -normalized.min.z,
+  )
   geometry.scale(1 / width, 1 / width, 1 / width)
   geometry.computeVertexNormals()
   geometry.computeBoundingBox()
