@@ -4,7 +4,7 @@ export function prepareAccessoryGeometry(source: BufferGeometry, rotationX: numb
   source.rotateX(rotationX)
   source.rotateZ(rotationZ)
   source.computeBoundingBox()
-  const bounds = source.boundingBox!
+  const bounds = source.boundingBox! // 非空断言
   const size = bounds.getSize(new Vector3())
   if (![size.x, size.y, size.z].every(Number.isFinite) || size.x <= 0 || size.y <= 0) {
     source.dispose()

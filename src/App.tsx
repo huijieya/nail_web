@@ -11,6 +11,7 @@ import assets from './assets.json'
 import { materialCrop } from './materials'
 import AccessoryLibrary from './AccessoryLibrary'
 import { accessoryPosition } from './accessories'
+import { dotColors, generateRandomDots } from './dots'
 import './editor.css'
 
 const ThreeDPreview = lazy(() => import('./ThreeDPreview'))
@@ -71,8 +72,10 @@ export default function App() {
   const [draft, setDraft] = useState<NailDesign | null>(null)
   const [zoom, setZoom] = useState(100)
   const [color, setColor] = useState('#fff5ed')
+  const [dotColor, setDotColor] = useState('#fffaf4')
+  const [dotsAutoColor, setDotsAutoColor] = useState(true)
   const [brush, setBrush] = useState(0.05)
-  const [spacing, setSpacing] = useState(2.5)
+  const [spacing, setSpacing] = useState(3.8)
   const [depth, setDepth] = useState(0.22)
   const [curve, setCurve] = useState(0.15)
   const [search, setSearch] = useState('')
@@ -90,6 +93,8 @@ export default function App() {
   const layer = nail.layers.find(candidate => candidate.id === layerId)
   const frenchLayer = nail.layers.find(candidate => candidate.kind === 'french')
   const dotsLayer = nail.layers.find(candidate => candidate.kind === 'dots')
+  const activeDotColor = dotsLayer?.color ?? dotColor
+  const activeDotsAutoColor = dotsLayer ? !!dotsLayer.autoColor : dotsAutoColor
   const activeTool = tools.find(candidate => candidate.id === tool)!
   const currentModel = surfaces[selected % 5]
 
@@ -265,20 +270,19 @@ export default function App() {
       setNotice('导出失败，请确认素材加载成功')
     }
   }
-  const addDotGrid = () => {
-    const entry = newLayer('dots', '均匀波点')
-    entry.color = color
-    entry.size = brush
-    const step = Math.max(brush * spacing, 0.08)
-    const ratio = currentModel ? currentModel.height / currentModel.width : 2
-    for (let row = 0.1; row < 0.95; row += step / ratio) {
-      for (let column = 0.1; column < 0.95; column += step) entry.points.push({ x: column, y: row })
-    }
+  const addRandomDots = () => {
+    if (!currentModel) return
+    const entry = newLayer('dots', '随机波点')
+    entry.color = activeDotColor
+    entry.autoColor = activeDotsAutoColor
+    entry.size = dotsLayer?.size ?? brush
+    entry.points = generateRandomDots(currentModel.mask, entry.size, spacing)
     replaceExclusiveLayer(entry)
   }
   const addHandDots = () => {
     const entry = newLayer('dots', '手绘波点')
-    entry.color = dotsLayer?.color || color
+    entry.color = activeDotColor
+    entry.autoColor = activeDotsAutoColor
     entry.size = dotsLayer?.size || brush
     replaceExclusiveLayer(entry)
   }
@@ -494,7 +498,8 @@ export default function App() {
                 design={nail}
                 tool={tool}
                 layerId={layerId}
-                color={color}
+                color={tool === 'dots' ? activeDotColor : color}
+                dotsAutoColor={activeDotsAutoColor}
                 brush={brush}
                 spacing={spacing}
                 zoom={zoom}
@@ -638,12 +643,13 @@ export default function App() {
           )}
           {tool === 'dots' && (
             <>
-              <ColorControl
-                label="波点颜色"
-                value={dotsLayer?.color || color}
-                onChange={value => {
-                  setColor(value)
-                  if (dotsLayer) patchExclusiveLayer('dots', { color: value })
+              <DotColorControl
+                value={activeDotColor}
+                automatic={activeDotsAutoColor}
+                onChange={(value, automatic) => {
+                  setDotColor(value)
+                  setDotsAutoColor(automatic)
+                  if (dotsLayer) patchExclusiveLayer('dots', { color: value, autoColor: automatic })
                 }}
               />
               <Range
@@ -658,9 +664,12 @@ export default function App() {
                 }}
               />
               <Range label="间距倍数" value={spacing} min={1.2} max={5} step={0.1} onChange={setSpacing} suffix="×" />
-              <button className="panel-button" onClick={addDotGrid}>
-                生成均匀波点
+              <button className="panel-button" disabled={!currentModel} onClick={addRandomDots}>
+                {dotsLayer?.points.length ? '重新随机生成波点' : '生成随机波点'}
               </button>
+              <p className="small-note">
+                随机错落排列，自动留出间隙与边缘留白。调整直径或间距后可重新生成，每次生成均可撤销。
+              </p>
               <button className="panel-button secondary" onClick={addHandDots}>
                 清空并新建手绘波点层
               </button>
@@ -968,6 +977,44 @@ function Range({
         value={value}
         onChange={event => onChange(Number(event.target.value))}
       />
+    </div>
+  )
+}
+function DotColorControl({
+  value,
+  automatic,
+  onChange,
+}: {
+  value: string
+  automatic: boolean
+  onChange: (value: string, automatic: boolean) => void
+}) {
+  return (
+    <div className="dot-color-control">
+      <h3>波点颜色</h3>
+      <div className="dot-color-presets" role="group" aria-label="波点颜色预设">
+        <button
+          className={`dot-swatch dot-swatch-auto ${automatic ? 'active' : ''}`}
+          aria-label="自动配色"
+          aria-pressed={automatic}
+          title="自动：根据底胶明暗搭配柔白或可可褐"
+          onClick={() => onChange(value, true)}
+        >
+          <span>AUTO</span>
+        </button>
+        {dotColors.map(preset => (
+          <button
+            key={preset.value}
+            className={`dot-swatch ${!automatic && value.toLowerCase() === preset.value ? 'active' : ''}`}
+            style={{ backgroundColor: preset.value }}
+            aria-label={preset.name}
+            aria-pressed={!automatic && value.toLowerCase() === preset.value}
+            title={`${preset.name} ${preset.value}`}
+            onClick={() => onChange(preset.value, false)}
+          />
+        ))}
+      </div>
+      <ColorControl label="自定义颜色" value={value} onChange={next => onChange(next, false)} />
     </div>
   )
 }

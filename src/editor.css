@@ -278,6 +278,46 @@
 .material-library {
   margin-top: 16px;
 }
+.dot-color-control h3 {
+  margin: 16px 0 14px;
+  font-size: 12px;
+  color: #ddd;
+}
+.dot-color-presets {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 3px;
+}
+.dot-swatch {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 3px solid #353535;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #666, inset 0 1px 3px #fff6;
+  transition: box-shadow 150ms, transform 150ms;
+}
+.dot-swatch:hover {
+  transform: translateY(-2px);
+}
+.dot-swatch.active {
+  box-shadow: 0 0 0 3px #b5a49a, inset 0 1px 3px #fff6;
+}
+.dot-swatch-auto {
+  width: 40px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #fffaf4 50%, #6d5148 50%);
+  color: #49372f;
+  font-size: 8px;
+  letter-spacing: 0.4px;
+}
+.dot-swatch-auto span {
+  background: #fffaf4b8;
+  border-radius: 3px;
+  padding: 1px 2px;
+}
 .accessory-model-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

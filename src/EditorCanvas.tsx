@@ -14,6 +14,7 @@ type Props = {
   tool: Tool
   layerId: string
   color: string
+  dotsAutoColor: boolean
   brush: number
   spacing: number
   zoom: number
@@ -78,6 +79,7 @@ export default function EditorCanvas(props: Props) {
       if (!layer) {
         layer = newLayer('dots', '手绘波点')
         layer.color = color
+        layer.autoColor = props.dotsAutoColor
         layer.size = brush
         draft.layers.push(layer)
         onSelectLayer(layer.id)

@@ -2,6 +2,7 @@ import { availableLengths, shapes } from './model'
 import { materialCrop } from './materials'
 import { compositeAccessories } from './accessories'
 import { isAccessorySource } from './accessoryCatalog'
+import { automaticDotColor } from './dots'
 
 export type Point = { x: number; y: number }
 export type Stroke = { points: Point[]; size: number }
@@ -11,6 +12,7 @@ export type Layer = {
   kind: 'dots' | 'image' | 'french' | 'accessory'
   visible: boolean
   color: string
+  autoColor?: boolean
   size: number
   points: Point[]
   src: string
@@ -99,6 +101,7 @@ export function parseProject(raw: string): Project {
         !['dots', 'image', 'french', 'accessory'].includes(layer.kind) ||
         !(layer.kind === 'accessory' ? isAccessorySource(layer.src) : validSource(layer.src)) ||
         !color(layer.color) ||
+        (layer.autoColor !== undefined && typeof layer.autoColor !== 'boolean') ||
         !number(layer.size, 0.001, 1) ||
         !number(layer.x, -2, 3) ||
         !number(layer.y, -2, 3) ||
@@ -190,11 +193,14 @@ export async function renderDesign(design: NailDesign, mask: HTMLCanvasElement, 
       height,
     )
   }
+  const autoDotColor = design.layers.some(layer => layer.visible && layer.kind === 'dots' && layer.autoColor)
+    ? automaticDotColor(canvas, mask)
+    : ''
   for (const layer of design.layers) {
     if (!layer.visible || layer.kind === 'accessory') continue
     const surface = makeCanvas(width, height)
     const painter = surface.getContext('2d')!
-    painter.fillStyle = layer.color
+    painter.fillStyle = layer.kind === 'dots' && layer.autoColor ? autoDotColor : layer.color
     if (layer.kind === 'dots') {
       for (const point of layer.points) {
         painter.beginPath()
