@@ -24,7 +24,7 @@ const tools: { id: Tool; name: string; icon: string; hint: string }[] = [
   { id: 'dots', name: '波点', icon: '⠿', hint: '点击或拖动绘制波点' },
   { id: 'eraser', name: '橡皮擦', icon: '⌫', hint: '仅擦除选中的法式或波点图层' },
   // { id: 'sticker2d', name: '2D 饰品', icon: '✦', hint: '添加贝壳饰品贴图' },
-  { id: 'sticker3d', name: '饰品素材', icon: '⬡', hint: '使用金属饰品图片作为贴图' },
+  { id: 'sticker3d', name: '饰品素材', icon: '⬡', hint: '使用金属、卡通饰品图片作为贴图' },
   { id: 'accessory', name: '3D 附件', icon: '✧', hint: '' },
   { id: 'upload', name: '上传图片', icon: '↥', hint: '上传图片并添加可编辑图层' },
 ]
@@ -35,9 +35,13 @@ const categoryNames: Record<string, string> = {
   base_coat_french: '法式胶',
   '3D_accessory_shell': '贝壳饰品',
   '3D_accessory_metal': '金属饰品',
+  '3D_accessory_cartoon': '卡通饰品',
 }
 const assetName = (src: string) => {
   const category = src.split('/')[2]
+  if (category === '3D_accessory_cartoon') {
+    return src.endsWith('rabbit_001.png') ? '抱心兔子 01 · 立体款' : '抱心兔子 02 · 平面款'
+  }
   if (category === 'base_coat_cateye') {
     const mode = src.match(/cateye-([a-z]+)_/)?.[1]
     const names: Record<string, string> = {
@@ -294,7 +298,7 @@ export default function App() {
         : tool === 'sticker2d'
           ? ['3D_accessory_shell']
           : tool === 'sticker3d'
-            ? ['3D_accessory_metal']
+            ? ['3D_accessory_cartoon', '3D_accessory_metal']
             : []
   const visibleAssets = assets.filter(
     asset =>
